@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.DS_Store
+train/logs/
+demo/models/
+*.pre_rename.bak
+
+# Only the proposed model is published. The four baselines are described in the
+# paper; their scripts and weights stay local, their held-out predictions do not.
+model/ann/
+model/transformer/
+model/xgboost/
+model/lightgbm/
+train/train_ann.py
+train/train_transformer.py
+train/train_xgboost.py
+train/train_lightgbm.py
+test/test_ann.py
+test/test_transformer.py
+test/test_xgboost.py
+test/test_lightgbm.py
+test/results/ann/
+test/results/transformer/
+test/results/xgboost/
+test/results/lightgbm/

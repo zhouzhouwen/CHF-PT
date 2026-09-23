@@ -1,0 +1,1755 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CHF-PT — critical heat flux predictor</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#128293;</text></svg>">
+<style>
+/* ===================================================================
+   Tokens
+   =================================================================== */
+:root{
+  --paper:#ffffff;   --canvas:#f6f5f2;   --ink:#12151a;    --ink-2:#454c56;
+  --muted:#7b828d;   --rule:#e6e4de;     --rule-2:#f0eee9;
+  --accent:#a8391f;  --accent-soft:#fbf0ec;
+  --teal:#186460;    --teal-soft:#e7f1f0;
+  --amber:#8a5a08;   --amber-soft:#fcf3e2;
+  --field:#ffffff;   --shadow:0 1px 2px rgba(18,21,26,.04), 0 10px 30px -20px rgba(18,21,26,.4);
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#171a1f; --canvas:#0f1114; --ink:#eeece7;  --ink-2:#c6cad0;
+    --muted:#929aa4; --rule:#2a3037;   --rule-2:#20252b;
+    --accent:#e58063;--accent-soft:#2b1d18;
+    --teal:#6fb9b0;  --teal-soft:#152524;
+    --amber:#d9a75a; --amber-soft:#2a2317;
+    --field:#1c2026; --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 34px -22px #000;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--canvas); color:var(--ink); font-family:var(--sans);
+     font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased}
+h1,h2{margin:0; font-weight:600; letter-spacing:-.015em}
+.num{font-variant-numeric:tabular-nums lining-nums}
+
+/* ===================================================================
+   Frame
+   =================================================================== */
+header.top{
+  background:var(--paper); border-bottom:1px solid var(--rule);
+  padding:20px 32px; display:flex; gap:20px; align-items:center; justify-content:space-between;
+}
+.brand h1{font-family:var(--serif); font-size:36px; line-height:1.1}
+.brand h1 span{color:var(--accent)}
+.brand .full{margin:5px 0 0; font-size:20px; color:var(--ink-2); font-weight:500;
+              letter-spacing:-.01em}
+.brand p{margin:5px 0 0; color:var(--muted); font-size:16.5px; max-width:78ch}
+.topright{display:flex; flex-direction:column; gap:8px; align-items:flex-end}
+.units{display:flex; gap:6px; align-items:center; font-size:15px; color:var(--muted)}
+.units select{width:auto; font-size:14px; padding:5px 26px 5px 9px;
+              background-position:calc(100% - 15px) 15px,calc(100% - 10px) 15px}
+.status{
+  font-size:14.5px; color:var(--teal); background:var(--teal-soft); border-radius:999px;
+  padding:5px 14px; white-space:nowrap; font-weight:500;
+}
+main{
+  display:grid; grid-template-columns:minmax(340px,400px) minmax(0,1fr); gap:20px;
+  padding:20px 32px 44px; max-width:1500px; margin:0 auto; align-items:start;
+}
+@media (max-width:1020px){
+  main{grid-template-columns:1fr; padding:16px 16px 40px}
+  header.top{padding:16px}
+}
+.panel{background:var(--paper); border:1px solid var(--rule); border-radius:14px;
+       box-shadow:var(--shadow); overflow:hidden}
+.panel + .panel{margin-top:20px}
+.block{padding:20px 22px}
+.block + .block{padding-top:0}
+.block h2{font-size:18px; margin-bottom:16px; color:var(--ink)}
+.block h2 small{float:right; font-weight:400; font-size:15px; color:var(--muted)}
+
+/* ===================================================================
+   Form
+   =================================================================== */
+.row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.row.one{grid-template-columns:1fr}
+.row + .row{margin-top:12px}
+.f{display:flex; flex-direction:column; gap:5px; min-width:0}
+.f label{font-size:15px; color:var(--ink-2); font-weight:500}
+.f label .u{color:var(--muted); font-weight:400}
+.f .flag{font-size:14.5px; color:var(--amber); display:none}
+.f.over .flag{display:block}
+input,select{
+  width:100%; font:inherit; font-size:17px; color:var(--ink); background:var(--field);
+  border:1px solid var(--rule); border-radius:9px; padding:9px 11px;
+  font-variant-numeric:tabular-nums; appearance:none;
+}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),
+        linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+       background-position:calc(100% - 17px) 19px,calc(100% - 12px) 19px;
+       background-size:5px 5px,5px 5px; background-repeat:no-repeat; padding-right:32px}
+input:focus,select:focus{outline:2px solid color-mix(in srgb,var(--accent) 30%,transparent);
+                         outline-offset:1px; border-color:var(--accent)}
+.f.over input{border-color:var(--amber)}
+.note{font-size:15.5px; color:var(--muted); margin-top:12px; line-height:1.55}
+.seg{display:flex; gap:6px}
+.seg button{
+  flex:1; font:inherit; font-size:15.5px; padding:9px 4px; cursor:pointer;
+  background:var(--field); color:var(--ink-2); border:1px solid var(--rule); border-radius:9px;
+}
+.seg button[aria-pressed=true]{background:var(--accent); color:#fff; border-color:var(--accent);
+                               font-weight:600}
+button.primary{
+  width:100%; font:inherit; font-size:17px; font-weight:600; padding:13px; cursor:pointer;
+  background:var(--accent); color:#fff; border:0; border-radius:10px;
+}
+button.primary:disabled{opacity:.6; cursor:progress}
+button.ghost{
+  font:inherit; font-size:15.5px; padding:8px 14px; cursor:pointer; color:var(--ink-2);
+  background:transparent; border:1px solid var(--rule); border-radius:9px;
+}
+button.ghost:hover{border-color:var(--accent); color:var(--accent)}
+.custom{background:var(--canvas); border-radius:11px; padding:14px; margin-top:14px}
+.custom input{font-size:16px; padding:8px 10px}
+.custom .f label{font-size:14px}
+.custom .note{font-size:14.5px}
+
+/* ===================================================================
+   Result
+   =================================================================== */
+.hero{padding:26px 26px 22px; display:flex; gap:28px; flex-wrap:wrap;
+      align-items:flex-end; justify-content:space-between}
+.hero .big{font-size:66px; font-weight:600; letter-spacing:-.035em; line-height:.95;
+           font-variant-numeric:tabular-nums}
+.hero .big span{font-size:21px; color:var(--muted); font-weight:400; letter-spacing:0;
+                margin-left:9px}
+.hero .band{margin-top:12px; font-size:16.5px; color:var(--ink-2)}
+.hero .band b{font-weight:600; color:var(--ink)}
+.hero .vs{font-size:16.5px; color:var(--muted); text-align:right}
+.hero .vs b{display:block; font-size:29px; color:var(--ink); font-weight:600;
+            font-variant-numeric:tabular-nums; letter-spacing:-.02em}
+.hero .vs em{font-style:normal; color:var(--accent); font-weight:600}
+.hero .vs .sub2{font-size:14px; margin-top:3px; max-width:30ch; line-height:1.4}
+
+.tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(168px,1fr)); gap:1px;
+       background:var(--rule-2); border-top:1px solid var(--rule-2)}
+.tile{background:var(--paper); padding:17px 22px}
+.tile .k{font-size:16px; color:var(--muted)}
+.tile .v{font-size:27px; font-weight:600; letter-spacing:-.02em; margin-top:1px;
+         font-variant-numeric:tabular-nums}
+.tile .n{font-size:15px; color:var(--muted); margin-top:2px}
+.tile.in .v{color:var(--teal)} .tile.edge .v{color:var(--amber)} .tile.out .v{color:var(--accent)}
+
+.flagline{
+  margin:0 26px 18px; padding:15px 19px; border-radius:10px; font-size:16px;
+  background:var(--amber-soft); color:var(--amber); cursor:pointer;
+}
+.flagline b{font-weight:600}
+.flagline ul{margin:9px 0 0; padding-left:20px; display:none}
+.flagline.open ul{display:block}
+.flagline li{margin-top:4px}
+.msg{margin:0 26px 18px; padding:15px 19px; border-radius:10px; font-size:16px; line-height:1.55}
+.msg.note{background:var(--canvas); color:var(--muted)}
+.msg.err{background:var(--accent-soft); color:var(--accent)}
+
+table.kv{width:100%; border-collapse:collapse; font-size:15.5px}
+table.kv td{padding:6px 0; border-bottom:1px solid var(--rule-2)}
+table.kv tr:last-child td{border-bottom:0}
+table.kv td.k{color:var(--ink-2); white-space:nowrap}
+table.kv td.v{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap;
+              font-weight:500}
+table.kv td.u{color:var(--muted); width:1%; white-space:nowrap; padding-left:8px; font-size:14.5px}
+table.kv td.v.off{color:var(--muted); font-weight:400}
+.cols{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:20px 30px}
+.colhead{font-size:15.5px; font-weight:600; margin-bottom:7px}
+.colhead span{font-weight:400; color:var(--muted); font-size:15px}
+details.raw{margin-top:20px; font-size:15.5px; color:var(--muted)}
+details.raw summary{cursor:pointer}
+details.raw pre{background:var(--canvas); border-radius:10px; padding:14px; overflow:auto;
+                max-height:300px; font-size:13px; line-height:1.5; color:var(--ink-2);
+                font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+svg{display:block; width:100%; overflow:visible}
+svg text{font-family:var(--sans); fill:var(--muted)}
+.legend{display:flex; flex-wrap:wrap; gap:20px; font-size:15.5px; color:var(--muted); margin-top:14px}
+.legend i{display:inline-block; width:18px; border-top:2px solid; vertical-align:middle;
+          margin-right:6px}
+.answer{margin:2px 0 20px; font-size:16.5px; line-height:1.6}
+.answer .a{padding:12px 16px; border-radius:10px; background:var(--canvas); margin-bottom:8px}
+.answer .a b{font-size:21px; font-weight:600; letter-spacing:-.01em}
+.answer .a.good{background:var(--teal-soft); color:var(--teal)}
+.answer .a.warn{background:var(--amber-soft); color:var(--amber)}
+.answer .a.bad{background:var(--accent-soft); color:var(--accent)}
+.answer .a span{color:var(--muted)}
+.attr{display:grid; grid-template-columns:auto 1fr auto; gap:7px 14px; align-items:center;
+      margin:16px 0 4px; font-size:15.5px}
+.attr .n{color:var(--ink-2); white-space:nowrap}
+.attr .b{position:relative; height:15px; background:var(--rule-2); border-radius:3px}
+.attr .b i{position:absolute; top:0; bottom:0; border-radius:3px; display:block}
+.attr .p{text-align:right; font-variant-numeric:tabular-nums; color:var(--muted); white-space:nowrap}
+.actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:14px 0 10px}
+#batchBody{padding:2px}
+#batchBody.drop{outline:2px dashed var(--accent); outline-offset:8px; border-radius:8px}
+#batchBody code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:14.5px;
+                background:var(--canvas); padding:1px 5px; border-radius:4px}
+table.batch{width:100%; border-collapse:collapse; font-size:15px; margin-top:14px}
+table.batch th{text-align:right; font-weight:600; color:var(--muted); font-size:14.5px;
+               padding:5px 8px; border-bottom:1px solid var(--rule); white-space:nowrap}
+table.batch th:first-child, table.batch td:first-child{text-align:left}
+table.batch td{text-align:right; padding:5px 8px; border-bottom:1px solid var(--rule-2);
+               font-variant-numeric:tabular-nums; white-space:nowrap}
+table.batch td.bad{color:var(--accent); text-align:left; font-variant-numeric:normal}
+table.batch tr:last-child td{border-bottom:0}
+.sweepbar{display:grid; grid-template-columns:1fr 110px 110px auto; gap:10px; align-items:end;
+          margin-bottom:16px}
+.sweepbar.two{grid-template-columns:1fr 1fr auto}
+.sweepbar.design{grid-template-columns:1fr 140px auto}
+@media (max-width:620px){
+  .sweepbar, .sweepbar.two, .sweepbar.design{grid-template-columns:1fr 1fr}
+}
+footer{max-width:1500px; margin:0 auto; padding:0 32px 44px; color:var(--muted); font-size:15.5px}
+footer b{color:var(--ink-2)}
+footer .howto{margin:0 0 18px; font-size:15.5px}
+footer .howto ol{margin:10px 0 0; padding-left:22px; max-width:96ch}
+footer .howto li{margin-top:7px; line-height:1.6}
+footer #foot{max-width:110ch}
+.loading{padding:32px 26px; color:var(--muted); font-size:16px}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <h1>CHF&#8209;<span>PT</span></h1>
+    <div class="full">Critical Heat Flux — Physics-anchored Pre-trained Transformer</div>
+    <p>Predicts the critical heat flux of a boiling system from its operating conditions.
+       One model for every geometry and every fluid.</p>
+  </div>
+  <div class="topright">
+    <div class="status" id="status">starting&#8230;</div>
+    <div class="units">
+      <label for="unitFlux">Units</label>
+      <select id="unitFlux"></select>
+      <select id="unitPress"></select>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ============================= inputs ============================= -->
+  <form class="panel" id="form" autocomplete="off">
+    <div class="block">
+      <h2>Configuration</h2>
+      <div class="row one">
+        <div class="f">
+          <label for="geometry">Test section</label>
+          <select id="geometry"></select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="f">
+          <label for="fluid">Fluid</label>
+          <select id="fluid"></select>
+        </div>
+        <div class="f">
+          <label for="orientation">Flow configuration</label>
+          <select id="orientation"></select>
+        </div>
+      </div>
+      <div class="custom" id="customFluid" style="display:none"></div>
+      <div class="note" id="geomNote"></div>
+      <div style="margin-top:14px">
+        <button type="button" class="ghost" id="loadExample">Fill from a real record</button>
+      </div>
+    </div>
+
+    <div class="block">
+      <h2>Operating point</h2>
+      <div id="operating"></div>
+    </div>
+
+    <div class="block" id="sectionBlock">
+      <h2>Dimensions <small id="charNote"></small></h2>
+      <div id="geomFields"></div>
+    </div>
+
+    <div class="block">
+      <div class="row">
+        <div class="f">
+          <label>Interval</label>
+          <div class="seg" id="alphaSeg"></div>
+        </div>
+        <div class="f">
+          <label for="in_q_op">Operating flux <span class="u" data-unit="kW m-2"></span></label>
+          <input type="number" id="in_q_op" step="any" placeholder="optional" data-conv="flux">
+        </div>
+      </div>
+      <div style="margin-top:16px"><button class="primary" id="run" type="submit">Predict</button></div>
+    </div>
+  </form>
+
+  <!-- ============================= results ============================= -->
+  <div>
+    <section class="panel" id="result"><div class="loading">Loading the model&#8230;</div></section>
+
+    <section class="panel" id="sweepPanel" style="display:none">
+      <div class="block">
+        <h2>Parametric sweep <small id="sweepNote">one input varied, everything else held fixed</small></h2>
+        <div class="seg" id="sweepMode" style="max-width:280px; margin-bottom:16px">
+          <button type="button" aria-pressed="true" data-mode="curve">One input</button>
+          <button type="button" aria-pressed="false" data-mode="map">Operating map</button>
+        </div>
+        <div class="sweepbar" id="curveBar">
+          <div class="f"><label for="sweepVar">Vary</label><select id="sweepVar"></select></div>
+          <div class="f"><label for="sweepMin">From</label><input type="number" id="sweepMin" step="any"></div>
+          <div class="f"><label for="sweepMax">To</label><input type="number" id="sweepMax" step="any"></div>
+          <div class="f"><label>&nbsp;</label><button type="button" class="ghost" id="runSweep">Redraw</button></div>
+        </div>
+        <div class="sweepbar two" id="mapBar" style="display:none">
+          <div class="f"><label for="mapX">Horizontal</label><select id="mapX"></select></div>
+          <div class="f"><label for="mapY">Vertical</label><select id="mapY"></select></div>
+          <div class="f"><label>&nbsp;</label><button type="button" class="ghost" id="runMap">Redraw</button></div>
+        </div>
+        <div id="sweepOut"></div>
+      </div>
+    </section>
+    <section class="panel" id="designPanel" style="display:none">
+      <div class="block">
+        <h2>Design margin <small>sized on the lower bound, not on the prediction</small></h2>
+        <div class="sweepbar design" id="designBar">
+          <div class="f"><label for="designVar">Size for</label><select id="designVar"></select></div>
+          <div class="f"><label for="designSF">Safety factor</label>
+            <input type="number" id="designSF" step="any" value="1.3"></div>
+          <div class="f"><label>&nbsp;</label>
+            <button type="button" class="ghost" id="runDesign">Redraw</button></div>
+        </div>
+        <div id="designOut"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="detailPanel" style="display:none">
+      <div class="block">
+        <h2>Computed inputs <small id="tokenNote"></small></h2>
+        <div class="cols" id="derived"></div>
+        <div id="anchorPlot" style="margin-top:22px"></div>
+        <details class="raw" id="attrBox" open>
+          <summary>Which inputs the prediction leans on</summary>
+          <div id="attrOut"></div>
+        </details>
+        <details class="raw" open>
+          <summary>The record as the network receives it</summary>
+          <pre id="rawRecord"></pre>
+        </details>
+      </div>
+    </section>
+
+    <section class="panel" id="batchPanel" style="display:none">
+      <div class="block">
+        <h2>Batch table <small>a whole design study in one pass</small></h2>
+        <details class="raw" id="batchBox">
+          <summary>Open the batch tool</summary>
+          <div id="batchBody">
+            <div class="note">
+              Give a CSV whose columns are named like the fields on the left —
+              <code>P_kPa</code>, <code>G_kg_m2s</code>, <code>DT_sub_K</code>,
+              <code>tube_Di_mm</code>, <code>q_op_kW_m2</code>, and so on. A column you leave out
+              keeps the value from the form, so a study that varies two quantities needs only
+              those two columns. Numbers are always in <b>kPa</b> and <b>kW m⁻²</b> here,
+              whatever the display is set to. Start from the template.
+            </div>
+            <div class="actions">
+              <button type="button" class="ghost" id="tmplBtn">Download a template</button>
+              <button type="button" class="ghost" id="pickBtn">Choose a CSV file…</button>
+              <input type="file" id="csvFile" accept=".csv,text/csv,text/plain" style="display:none">
+              <button type="button" class="ghost" id="dlBtn" disabled>Download results</button>
+            </div>
+            <div class="note" id="batchStatus">or drop a file here</div>
+            <div id="batchOut"></div>
+          </div>
+        </details>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <details class="raw howto">
+    <summary>How to use this page</summary>
+    <ol>
+      <li>Pick a <b>test section</b>, then a <b>fluid</b>. Any of the fifteen sections goes with any
+          of the seven fluids, or with your own properties under <i>custom fluid</i>.</li>
+      <li>Type the <b>operating point</b>. The form asks only for the quantities that section has;
+          the eight saturation properties, the dimensionless groups and the three correlation
+          anchors are computed for you and listed under <i>Computed inputs</i>.</li>
+      <li>Read the four outputs: the <b>prediction</b>, the <b>two conformal bounds</b>, and the
+          <b>OOD score</b>, which says whether the condition resembles what the model was
+          pre-trained on.</li>
+      <li>Inputs may leave the corpus. The prediction still comes back, with an amber line naming
+          the inputs that left it — treat those as extrapolation and read the OOD score.</li>
+      <li><b>Parametric sweep</b> varies one input and draws the response with its interval;
+          <b>Operating map</b> varies two and draws CHF over the plane.</li>
+      <li>Enter an <b>operating heat flux</b> and <b>Design margin</b> reports the allowable flux
+          at your safety factor, and how far one input must move to keep it.</li>
+      <li><b>Batch table</b> takes a CSV of many operating points and gives back predictions,
+          bounds and OOD scores as a CSV.</li>
+      <li>The <b>unit</b> selector at the top changes the display only. The model always works in
+          kPa and kW m⁻², and a batch file is always written in those units.</li>
+    </ol>
+  </details>
+  <div id="foot"></div>
+</footer>
+
+<script>
+"use strict";
+/* ====================================================================
+   0. Helpers
+   ==================================================================== */
+const $  = (s, r) => (r || document).querySelector(s);
+const el = (tag, cls, txt) => { const n = document.createElement(tag);
+  if (cls) n.className = cls; if (txt !== undefined) n.textContent = txt; return n; };
+const NS = "http://www.w3.org/2000/svg";
+const svgEl = (tag, a) => { const n = document.createElementNS(NS, tag);
+  for (const k in (a || {})) n.setAttribute(k, a[k]); return n; };
+const SUP = {"-":"⁻","0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹"};
+const sup = s => String(s).split("").map(c => SUP[c] || c).join("");
+
+function unit(u){
+  if (!u || u === "-" || u === "0/1") return "";
+  if (u === "degC") return "°C";
+  return u.replace(/([a-zA-Z])(-?\d)/g, (m, a, b) => a + sup(b));
+}
+function sig(v, n){
+  if (v === null || v === undefined || !isFinite(v)) return "—";
+  n = n || 4;
+  const a = Math.abs(v);
+  if (a === 0) return "0";
+  if (a >= 1e6 || a < 1e-3){
+    const e = Math.floor(Math.log10(a));
+    return (v / Math.pow(10, e)).toFixed(2) + "×10" + sup(e);
+  }
+  const d = Math.max(0, n - 1 - Math.floor(Math.log10(a)));
+  return v.toFixed(Math.min(d, 6)).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
+}
+function group(v, n){
+  const s = sig(v, n || 4);
+  if (!/^-?\d/.test(s)) return s;
+  const p = s.split(".");
+  p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return p.join(".");
+}
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+// sig() is for display and may return "9.00×10⁻⁵"; an input needs a plain number
+function numVal(v, n){
+  if (v === null || v === undefined || !isFinite(v)) return "";
+  return String(Number(Number(v).toPrecision(n || 6)));
+}
+
+/* --------------------------------------------------------------------
+   Units. Everything the server sees is canonical — kPa and kW m⁻² — and
+   only the display is converted, so no arithmetic ever crosses a unit
+   boundary. canonical = shown × factor.
+   -------------------------------------------------------------------- */
+const UNITS = {
+  flux:  {"kW m-2": {f: 1}, "MW m-2": {f: 1000}, "W cm-2": {f: 10}},
+  press: {"kPa": {f: 1}, "MPa": {f: 1000}, "bar": {f: 100}}
+};
+const CANON = {flux: "kW m-2", press: "kPa"};
+function uconv(u){                       // which family a server unit belongs to
+  if (u === "kW m-2") return "flux";
+  if (u === "kPa") return "press";
+  return null;
+}
+function ufac(kind){ return UNITS[kind][S.unit[kind]].f; }
+function dval(v, u){                     // canonical value -> shown value
+  const k = uconv(u);
+  return (!k || v === null || v === undefined || !isFinite(v)) ? v : v / ufac(k);
+}
+function dunit(u){                       // canonical unit -> shown unit
+  const k = uconv(u);
+  return k ? unit(S.unit[k]) : unit(u);
+}
+const fD = v => dval(v, "kW m-2"), pD = v => dval(v, "kPa");
+const FU = () => dunit("kW m-2");
+function dArr(a, u){ const k = uconv(u); if (!k) return a;
+  const f = ufac(k); return a.map(v => (v === null || v === undefined) ? v : v / f); }
+
+async function api(path, body){
+  const r = await fetch(path, body ? {method: "POST",
+    headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)} : undefined);
+  const j = await r.json().catch(() => ({ok: false, error: "the server returned no JSON"}));
+  if (j.ok === false) throw new Error(j.error || "request failed");
+  return j;
+}
+
+/* ====================================================================
+   1. State
+   ==================================================================== */
+const S = {schema: null, geom: null, alpha: 0.10, mode: "T_in", example: null,
+           result: null, props: null, custom: false, busy: false, measuredShown: false,
+           mapMode: false, unit: {flux: "kW m-2", press: "kPa"}};
+const CUSTOM = "__custom__";
+const CF = [["T_sat_C", "Saturation temperature", "degC"], ["P_crit_kPa", "Critical pressure", "kPa"],
+            ["rho_l", "Liquid density", "kg m-3"], ["rho_v", "Vapour density", "kg m-3"],
+            ["hfg", "Latent heat", "kJ kg-1"], ["sigma", "Surface tension", "N m-1"],
+            ["mu_l", "Liquid viscosity", "Pa s"], ["cp_l", "Liquid heat capacity", "kJ kg-1 K-1"],
+            ["k_l", "Liquid conductivity", "W m-1 K-1"]];
+
+/* ====================================================================
+   2. Building the form
+   ==================================================================== */
+function field(key, label, unitTxt, opts){
+  opts = opts || {};
+  const kind = uconv(unitTxt);
+  const f = el("div", "f");
+  const l = el("label", null, label + " ");
+  l.setAttribute("for", "in_" + key);
+  if (unitTxt){
+    const u = el("span", "u", dunit(unitTxt));
+    u.dataset.unit = unitTxt;
+    l.appendChild(u);
+  }
+  const i = el("input");
+  i.type = "number"; i.step = "any"; i.id = "in_" + key; i.dataset.key = key;
+  if (kind) i.dataset.conv = kind;
+  if (opts.value !== null && opts.value !== undefined) i.value = numVal(dval(opts.value, unitTxt));
+  if (opts.placeholder !== null && opts.placeholder !== undefined)
+    i.placeholder = numVal(dval(opts.placeholder, unitTxt), 4);
+  if (opts.range && opts.range.min !== undefined){
+    i.dataset.min = opts.range.min; i.dataset.max = opts.range.max;  // always canonical
+    i.dataset.unit = unitTxt || "";
+    i.title = "in the corpus: " + sig(dval(opts.range.min, unitTxt), 3) + " to "
+              + sig(dval(opts.range.max, unitTxt), 3) + " " + dunit(unitTxt || "");
+  }
+  f.append(l, i, el("div", "flag"));
+  return f;
+}
+function rowOf(){
+  const r = el("div", "row");
+  for (const n of arguments) if (n) r.appendChild(n);
+  return r;
+}
+
+function buildOperating(){
+  const g = S.geom, R = g.ranges, ex = (S.example && S.example.payload) || {}, box = $("#operating");
+  box.textContent = "";
+  const pf = field("P_kPa", "Pressure", "kPa",
+    {value: ex.P_kPa, placeholder: R.P_kPa.median, range: R.P_kPa});
+  $("input", pf).addEventListener("input", () => { if (S.mode === "both") S.mode = "T_in"; });
+  const t = field("T_in_C", g.flow ? "Inlet temperature" : "Liquid temperature", "degC",
+    {value: ex.T_in_C, range: R.T_in_C});
+  const d = field("DT_sub_K", "Subcooling", "K", {value: ex.DT_sub_K, range: R.DT_sub_K});
+  $("input", t).addEventListener("input", () => { S.mode = "T_in"; });
+  $("input", d).addEventListener("input", () => { S.mode = "DT_sub"; });
+  box.append(
+    rowOf(pf, g.flow ? field("G_kg_m2s", "Mass flux", "kg m-2 s-1",
+      {value: ex.G_kg_m2s, placeholder: R.G_kg_m2s.median, range: R.G_kg_m2s}) : null),
+    rowOf(t, d));
+  if (g.flow)
+    box.appendChild(rowOf(field("heated_length_m", "Heated length", "m",
+      {value: ex.heated_length_m, placeholder: R.heated_length_m.median,
+       range: R.heated_length_m})));
+  else
+    box.appendChild(el("div", "note",
+      "No channel flow here, so the mass flux, Reynolds and Weber tokens are not emitted and the "
+      + "length scale is the capillary length of the fluid."));
+}
+
+function buildGeometry(){
+  const g = S.geom, box = $("#geomFields");
+  box.textContent = "";
+  const ex = ((S.example && S.example.payload) || {}).geometry || {};
+  const items = [];
+  for (const f of g.fields)
+    items.push(field(f.key, f.label, f.unit, {value: ex[f.key],
+      placeholder: f.range && f.range.median, range: f.range}));
+  if (g.char_length_input)
+    items.push(field("char_length_mm", "Hydraulic diameter", "mm",
+      {value: S.example && S.example.payload.char_length_mm,
+       placeholder: g.ranges.char_length_mm.median, range: g.ranges.char_length_mm}));
+  for (const c of g.categoricals){
+    const f = el("div", "f");
+    const l = el("label", null, c.label); l.setAttribute("for", "in_" + c.key);
+    const s = el("select"); s.id = "in_" + c.key; s.dataset.key = c.key; s.dataset.cat = "1";
+    s.appendChild(new Option("not specified", ""));
+    for (const lv of c.levels) s.appendChild(new Option(lv, lv));
+    if (ex[c.key]) s.value = ex[c.key];
+    f.append(l, s); items.push(f);
+  }
+  for (let i = 0; i < items.length; i += 2) box.appendChild(rowOf(items[i], items[i + 1]));
+  $("#sectionBlock").style.display = items.length ? "" : "none";
+  const src = g.char_length_from;
+  const lab = src && (g.fields.find(f => f.key === src) || {}).label;
+  $("#charNote").textContent = lab ? "length scale: " + lab.toLowerCase() : "";
+}
+
+function buildCustomFluid(){
+  const box = $("#customFluid");
+  box.style.display = S.custom ? "" : "none";
+  if (!S.custom || box.dataset.built) return;
+  box.dataset.built = "1";
+  const nf = el("div", "f");
+  const nl = el("label", null, "Name"); nl.setAttribute("for", "in_cf_name");
+  const ni = el("input"); ni.type = "text"; ni.id = "in_cf_name"; ni.value = "my fluid";
+  nf.append(nl, ni);
+  box.appendChild(rowOf(nf));
+  const items = CF.map(([k, l, u]) => field("cf_" + k, l, u, {}));
+  for (let i = 0; i < items.length; i += 2) box.appendChild(rowOf(items[i], items[i + 1]));
+  box.appendChild(el("div", "note",
+    "Saturation properties at your pressure; they stay as entered when the pressure changes. "
+    + "The model then works from the properties alone — no fluid-identity token is emitted "
+    + "unless the name is one of the seven pre-trained fluids."));
+}
+function fillCustomFrom(props){
+  if (!S.custom || !props) return;
+  for (const [k] of CF){
+    const i = $("#in_cf_" + k);
+    if (i && !i.value) i.value = numVal(props[k]);
+  }
+}
+
+function buildFluids(){
+  const sel = $("#fluid"), cur = sel.value;
+  sel.textContent = "";
+  for (const f of S.schema.fluids) sel.appendChild(new Option(f.key, f.key));
+  sel.appendChild(new Option("custom fluid…", CUSTOM));
+  const want = (S.example && S.example.payload.fluid) || cur;
+  sel.value = S.custom ? CUSTOM
+    : (S.schema.fluids.some(f => f.key === want) ? want : S.geom.fluids[0]);
+}
+
+function buildOrientation(){
+  const sel = $("#orientation");
+  sel.textContent = "";
+  for (const o of S.geom.orientations) sel.appendChild(new Option(o.label, o.key));
+  const want = S.example && S.example.payload.orientation;
+  if (want && S.geom.orientations.some(o => o.key === want)) sel.value = want;
+}
+
+const SPLIT_LABEL = {
+  test: "test subset, held out from training",
+  val: "validation subset, held out from training",
+  cal: "calibration subset, used only to calibrate the interval",
+  train: "training subset (the checkpoints have seen this record)"
+};
+function splitNote(ex){
+  return SPLIT_LABEL[ex && ex.split] || "held out from training";
+}
+function updateGeomNote(){
+  const ex = S.example;
+  $("#geomNote").textContent = S.geom.note + " "
+    + S.geom.n_records.toLocaleString() + " records in the corpus"
+    + (ex ? "; record #" + ex.row_id + " is loaded — " + splitNote(ex) + ", measured "
+            + group(fD(ex.measured_CHF_kW_m2), 4) + " " + FU() + "." : ".");
+}
+function rebuildForm(){
+  buildFluids(); buildOrientation(); buildOperating(); buildGeometry(); buildCustomFluid();
+  S.mode = S.example ? "both" : "DT_sub";
+  updateGeomNote();
+  buildSweepVars(); buildMapVars(); buildDesignVars();
+}
+function selectGeometry(key, withExample){
+  S.geom = S.schema.geometries.find(g => g.key === key);
+  S.example = withExample ? S.geom.example : null;
+  if (withExample) S.custom = false;
+  $("#geometry").value = key;
+  rebuildForm();
+}
+// every click draws a different real record, from any of the four subsets
+async function rollExample(){
+  const btn = $("#loadExample");
+  btn.disabled = true;
+  try {
+    const r = await api("/api/example?geometry=" + encodeURIComponent(S.geom.key)
+                        + (S.example ? "&avoid=" + S.example.row_id : ""));
+    S.example = r.example;
+    S.custom = false;
+    rebuildForm();
+    await run();
+  } catch (e){
+    $("#geomNote").textContent = e.message;
+  } finally { btn.disabled = false; }
+}
+
+/* ====================================================================
+   3. Reading the form
+   ==================================================================== */
+function val(key){                       // always canonical: kPa, kW m⁻², SI
+  const i = $("#in_" + key);
+  if (!i) return null;
+  if (i.dataset.cat) return i.value || null;
+  if (i.value === "") return null;
+  const v = Number(i.value);
+  return i.dataset.conv ? v * ufac(i.dataset.conv) : v;
+}
+function payload(){
+  const g = S.geom;
+  const p = {
+    fluid: S.custom ? (($("#in_cf_name") || {}).value || "custom").trim() || "custom"
+                    : $("#fluid").value,
+    geometry_type: g.key, orientation: $("#orientation").value,
+    P_kPa: val("P_kPa"), subcooling_mode: S.mode,
+    T_in_C: val("T_in_C"), DT_sub_K: val("DT_sub_K"),
+    G_kg_m2s: g.flow ? val("G_kg_m2s") : null,
+    heated_length_m: g.flow ? val("heated_length_m") : null,
+    geometry: {}, alpha: S.alpha
+  };
+  for (const f of g.fields) p.geometry[f.key] = val(f.key);
+  for (const c of g.categoricals) p.geometry[c.key] = val(c.key);
+  if (g.char_length_input) p.char_length_mm = val("char_length_mm");
+  if (S.custom){
+    const c = {};
+    for (const [k] of CF) c[k] = val("cf_" + k);
+    p.custom_fluid = c;
+  }
+  const q = val("q_op");
+  if (q !== null && isFinite(q) && q > 0) p.q_op_kW_m2 = q;
+  return p;
+}
+function markRanges(){
+  document.querySelectorAll("#form input[type=number]").forEach(i => {
+    const lo = Number(i.dataset.min), hi = Number(i.dataset.max);
+    const v = Number(i.value) * (i.dataset.conv ? ufac(i.dataset.conv) : 1);
+    const over = i.value !== "" && isFinite(lo) && isFinite(hi) && (v < lo || v > hi);
+    const f = i.parentNode;
+    f.classList.toggle("over", over);
+    if (over) $(".flag", f).textContent = "outside the corpus, "
+      + sig(dval(lo, i.dataset.unit), 3) + " to " + sig(dval(hi, i.dataset.unit), 3)
+      + " " + dunit(i.dataset.unit);
+  });
+}
+
+/* ====================================================================
+   4. Drawing
+   ==================================================================== */
+function ticks(lo, hi, log, want){
+  want = want || 5;
+  const out = [];
+  if (log && Math.log10(hi / lo) < 0.7) log = false;
+  if (log){
+    const a = Math.floor(Math.log10(lo)), b = Math.ceil(Math.log10(hi));
+    for (let e = a; e <= b; e++)
+      for (const m of (b - a <= 2 ? [1, 2, 5] : [1])){
+        const v = m * Math.pow(10, e);
+        if (v >= lo * .999 && v <= hi * 1.001) out.push(v);
+      }
+    return out.length >= 2 ? out : [lo, hi];
+  }
+  const step0 = (hi - lo) / want, mag = Math.pow(10, Math.floor(Math.log10(step0)));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= step0 * .999) || mag * 10;
+  for (let v = Math.ceil(lo / step) * step; v <= hi * 1.0001; v += step)
+    out.push(Math.abs(v) < step * 1e-9 ? 0 : v);
+  return out;
+}
+
+function drawInterval(host, r){
+  const W = host.clientWidth || 660, H = 118, L = 12, R = 12, y = 54;
+  const lowD = fD(r.interval.lower_kW_m2), upD = fD(r.interval.upper_kW_m2);
+  const chfD = fD(r.chf_kW_m2), seedD = r.seeds.per_seed.map(s => fD(s.chf_kW_m2));
+  const measD = S.measuredShown ? fD(S.example.measured_CHF_kW_m2) : null;
+  const pts = [lowD, upD, chfD].concat(seedD);
+  if (measD !== null) pts.push(measD);
+  const lo = Math.min.apply(null, pts), hi = Math.max.apply(null, pts);
+  const pad = Math.max((Math.log10(hi) - Math.log10(lo)) * .38, .025);
+  const a = Math.log10(lo) - pad, b = Math.log10(hi) + pad;
+  const x = v => L + (Math.log10(v) - a) / (b - a) * (W - L - R);
+  const svg = svgEl("svg", {viewBox: "0 0 " + W + " " + H, height: H});
+
+  svg.appendChild(svgEl("line", {x1: L, x2: W - R, y1: y, y2: y, stroke: "var(--rule)"}));
+  for (const t of ticks(Math.pow(10, a), Math.pow(10, b), true, 4)){
+    svg.appendChild(svgEl("line", {x1: x(t), x2: x(t), y1: y, y2: y + 6, stroke: "var(--rule)"}));
+    const tx = svgEl("text", {x: x(t), y: y + 23, "font-size": 14, "text-anchor": "middle"});
+    tx.textContent = group(t, 3); svg.appendChild(tx);
+  }
+  const bx = x(lowD), bw = Math.max(3, x(upD) - bx);
+  svg.appendChild(svgEl("rect", {x: bx, y: y - 20, width: bw, height: 40, rx: 5,
+    fill: "var(--accent)", "fill-opacity": .14}));
+  for (const v of seedD)
+    svg.appendChild(svgEl("line", {x1: x(v), x2: x(v), y1: y - 11, y2: y + 11,
+      stroke: "var(--ink)", "stroke-opacity": .28}));
+  svg.appendChild(svgEl("circle", {cx: x(chfD), cy: y, r: 6, fill: "var(--accent)"}));
+  if (measD !== null){
+    const xm = x(measD);
+    svg.appendChild(svgEl("path", {d: "M" + xm + " " + (y - 27) + "l6 -10h-12z",
+      fill: "var(--teal)"}));
+    const t = svgEl("text", {x: xm, y: y - 33, "font-size": 14, "text-anchor": "middle",
+      fill: "var(--teal)", "font-weight": 600});
+    t.textContent = "measured"; svg.appendChild(t);
+  }
+  host.textContent = ""; host.appendChild(svg);
+  const lg = el("div", "legend");
+  lg.innerHTML = '<span><i style="border-color:var(--accent)"></i>prediction and the '
+    + r.interval.confidence + '% interval, ' + FU() + '</span>'
+    + '<span><i style="border-color:var(--ink);opacity:.35"></i>the five seeds</span>';
+  host.appendChild(lg);
+}
+
+function drawAnchors(host, r){
+  const rows = [];
+  for (const a of r.derived.anchors)
+    if (a.value !== null && a.value !== undefined) rows.push({n: a.name, v: fD(a.value), k: "a"});
+  rows.push({n: "CHF-PT", v: fD(r.chf_kW_m2), k: "m"});
+  if (S.measuredShown) rows.push({n: "measured", v: fD(S.example.measured_CHF_kW_m2), k: "t"});
+  const W = host.clientWidth || 660, rowH = 30, L = 92, R = 82, H = rows.length * rowH + 26;
+  const vs = rows.map(d => d.v);
+  const lo = Math.min.apply(null, vs) * .5, hi = Math.max.apply(null, vs) * 1.7;
+  const a = Math.log10(lo), b = Math.log10(hi);
+  const x = v => L + (Math.log10(v) - a) / (b - a) * (W - L - R);
+  const svg = svgEl("svg", {viewBox: "0 0 " + W + " " + H, height: H});
+  for (const t of ticks(lo, hi, true, 4)){
+    svg.appendChild(svgEl("line", {x1: x(t), x2: x(t), y1: 4, y2: H - 20, stroke: "var(--rule-2)"}));
+    const tx = svgEl("text", {x: x(t), y: H - 4, "font-size": 14, "text-anchor": "middle"});
+    tx.textContent = group(t, 3); svg.appendChild(tx);
+  }
+  rows.forEach((d, i) => {
+    const yy = 18 + i * rowH;
+    const col = d.k === "m" ? "var(--accent)" : d.k === "t" ? "var(--teal)" : "var(--ink-2)";
+    const nm = svgEl("text", {x: L - 12, y: yy + 5, "font-size": 15.5, "text-anchor": "end",
+      fill: col, "font-weight": d.k === "a" ? 400 : 600});
+    nm.textContent = d.n; svg.appendChild(nm);
+    svg.appendChild(svgEl("rect", {x: L, y: yy - 8, width: Math.max(2, x(d.v) - L), height: 16,
+      rx: 3, fill: col, "fill-opacity": d.k === "a" ? .2 : .8}));
+    const vt = svgEl("text", {x: Math.min(W - 2, x(d.v) + 8), y: yy + 5, "font-size": 14.5,
+      fill: col, "font-weight": 500});
+    vt.textContent = group(d.v, 4); svg.appendChild(vt);
+  });
+  host.textContent = ""; host.appendChild(svg);
+  host.appendChild(el("div", "legend",
+    "The Zuber limit is the base of the prediction; the other correlations enter as evidence "
+    + "where they apply. Logarithmic axis, " + FU() + "."));
+}
+
+function drawNovelty(host, n){
+  const W = host.clientWidth || 260, H = 18, y = 9;
+  const p = n.percentiles, top = Math.max(Number(p["99"]) * 1.3, n.score * 1.1, 12);
+  const x = v => clamp(v / top, 0, 1) * W;
+  const svg = svgEl("svg", {viewBox: "0 0 " + W + " " + H, height: H});
+  svg.appendChild(svgEl("rect", {x: 0, y: y - 3, width: W, height: 6, rx: 3, fill: "var(--rule-2)"}));
+  svg.appendChild(svgEl("rect", {x: 0, y: y - 3, width: x(Number(p["90"])), height: 6, rx: 3,
+    fill: "var(--teal)", "fill-opacity": .35}));
+  const col = n.level === "in" ? "var(--teal)" : n.level === "edge" ? "var(--amber)"
+                                                                   : "var(--accent)";
+  svg.appendChild(svgEl("circle", {cx: x(n.score), cy: y, r: 5.5, fill: col}));
+  host.textContent = ""; host.appendChild(svg);
+}
+
+function drawSweep(host, s){
+  const W = host.clientWidth || 660, H = 320, L = 66, R = 18, T = 14, B = 46;
+  const xs = dArr(s.x, s.unit), cur = dval(s.current, s.unit);
+  const lowA = dArr(s.lower_kW_m2, "kW m-2"), upA = dArr(s.upper_kW_m2, "kW m-2");
+  const chfA = dArr(s.chf_kW_m2, "kW m-2"), zubA = dArr(s.zuber_kW_m2, "kW m-2");
+  const xlo = Math.min.apply(null, xs), xhi = Math.max.apply(null, xs);
+  const all = lowA.concat(upA, zubA);
+  const ylo = Math.min.apply(null, all) * .9, yhi = Math.max.apply(null, all) * 1.1;
+  const xlog = s.log && xlo > 0;
+  const X = v => L + (xlog ? (Math.log10(v) - Math.log10(xlo)) / (Math.log10(xhi) - Math.log10(xlo))
+                           : (v - xlo) / (xhi - xlo || 1)) * (W - L - R);
+  const Y = v => T + (1 - (Math.log10(v) - Math.log10(ylo)) / (Math.log10(yhi) - Math.log10(ylo)))
+                     * (H - T - B);
+  const svg = svgEl("svg", {viewBox: "0 0 " + W + " " + H, height: H});
+  for (const t of ticks(ylo, yhi, true, 5)){
+    svg.appendChild(svgEl("line", {x1: L, x2: W - R, y1: Y(t), y2: Y(t), stroke: "var(--rule-2)"}));
+    const tx = svgEl("text", {x: L - 12, y: Y(t) + 4.5, "font-size": 14, "text-anchor": "end"});
+    tx.textContent = group(t, 3); svg.appendChild(tx);
+  }
+  for (const t of ticks(xlo, xhi, xlog, 5)){
+    if (t < xlo || t > xhi) continue;
+    const tx = svgEl("text", {x: X(t), y: H - B + 22, "font-size": 14, "text-anchor": "middle"});
+    tx.textContent = group(t, 3); svg.appendChild(tx);
+  }
+  const ax = svgEl("text", {x: (L + W - R) / 2, y: H - 6, "font-size": 15.5, "text-anchor": "middle"});
+  ax.textContent = s.label + " (" + dunit(s.unit) + ")"; svg.appendChild(ax);
+  const ay = svgEl("text", {x: 14, y: (T + H - B) / 2, "font-size": 15.5, "text-anchor": "middle",
+    transform: "rotate(-90 14 " + ((T + H - B) / 2) + ")"});
+  ay.textContent = "CHF (" + FU() + ")"; svg.appendChild(ay);
+
+  let band = "M" + X(xs[0]) + " " + Y(upA[0]);
+  for (let i = 1; i < xs.length; i++) band += "L" + X(xs[i]) + " " + Y(upA[i]);
+  for (let i = xs.length - 1; i >= 0; i--) band += "L" + X(xs[i]) + " " + Y(lowA[i]);
+  svg.appendChild(svgEl("path", {d: band + "Z", fill: "var(--accent)", "fill-opacity": .13}));
+  const line = (arr, col, dash) => {
+    let d = "M" + X(xs[0]) + " " + Y(arr[0]);
+    for (let i = 1; i < xs.length; i++) d += "L" + X(xs[i]) + " " + Y(arr[i]);
+    svg.appendChild(svgEl("path", {d: d, fill: "none", stroke: col, "stroke-width": 2.2,
+      "stroke-dasharray": dash || "none", "stroke-linejoin": "round"}));
+  };
+  line(zubA, "var(--teal)", "6 5");
+  line(chfA, "var(--accent)");
+  if (cur !== undefined && cur !== null && cur >= xlo && cur <= xhi)
+    svg.appendChild(svgEl("line", {x1: X(cur), x2: X(cur), y1: T, y2: H - B,
+      stroke: "var(--ink)", "stroke-opacity": .3, "stroke-dasharray": "3 4"}));
+  host.textContent = ""; host.appendChild(svg);
+  const lg = el("div", "legend");
+  lg.innerHTML = '<span><i style="border-color:var(--accent)"></i>CHF-PT with the '
+    + s.confidence + '% interval</span>'
+    + '<span><i style="border-color:var(--teal);border-top-style:dashed"></i>Zuber limit</span>';
+  host.appendChild(lg);
+}
+
+// a sequential ramp that stays legible on paper and on a dark screen
+const RAMP = ["#440154","#472d7b","#3b528b","#2c728e","#21918c",
+              "#28ae80","#5ec962","#addc30","#fde725"];
+
+function drawMap(host, m){
+  const W = host.clientWidth || 660, H = 360, L = 74, R = 108, T = 12, B = 50;
+  const xs = dArr(m.x.values, m.x.unit), ys = dArr(m.y.values, m.y.unit);
+  const z = m.chf_kW_m2.map(row => dArr(row, "kW m-2"));
+  const cx0 = dval(m.cx, m.x.unit), cy0 = dval(m.cy, m.y.unit);
+  const flat = [];
+  for (const row of z) for (const v of row) if (v !== null) flat.push(v);
+  if (!flat.length){ host.textContent = ""; return; }
+  const zlo = Math.min.apply(null, flat), zhi = Math.max.apply(null, flat);
+  const band = v => clamp(Math.floor((Math.log10(v) - Math.log10(zlo))
+                    / Math.max(Math.log10(zhi / zlo), 1e-9) * RAMP.length), 0, RAMP.length - 1);
+  const pos = (v, arr, log) => {
+    const lo = arr[0], hi = arr[arr.length - 1];
+    return log ? (Math.log10(v) - Math.log10(lo)) / (Math.log10(hi / lo))
+               : (v - lo) / (hi - lo || 1);
+  };
+  const X = v => L + pos(v, xs, m.x.log) * (W - L - R);
+  const Y = v => (H - B) - pos(v, ys, m.y.log) * (H - T - B);
+  const svg = svgEl("svg", {viewBox: "0 0 " + W + " " + H, height: H});
+
+  const cw = (W - L - R) / (xs.length - 1), ch = (H - T - B) / (ys.length - 1);
+  for (let j = 0; j < ys.length; j++)
+    for (let i = 0; i < xs.length; i++){
+      const v = z[j][i];
+      if (v === null) continue;
+      svg.appendChild(svgEl("rect", {x: X(xs[i]) - cw / 2, y: Y(ys[j]) - ch / 2,
+        width: cw + .6, height: ch + .6, fill: RAMP[band(v)]}));
+    }
+  for (const t of ticks(xs[0], xs[xs.length - 1], m.x.log, 5)){
+    if (t < xs[0] || t > xs[xs.length - 1]) continue;
+    const tx = svgEl("text", {x: X(t), y: H - B + 22, "font-size": 14, "text-anchor": "middle"});
+    tx.textContent = group(t, 3); svg.appendChild(tx);
+  }
+  for (const t of ticks(ys[0], ys[ys.length - 1], m.y.log, 5)){
+    if (t < ys[0] || t > ys[ys.length - 1]) continue;
+    const tx = svgEl("text", {x: L - 12, y: Y(t) + 4.5, "font-size": 14, "text-anchor": "end"});
+    tx.textContent = group(t, 3); svg.appendChild(tx);
+  }
+  const ax = svgEl("text", {x: (L + W - R) / 2, y: H - 6, "font-size": 15.5, "text-anchor": "middle"});
+  ax.textContent = m.x.label + " (" + dunit(m.x.unit) + ")"; svg.appendChild(ax);
+  const ay = svgEl("text", {x: 16, y: (T + H - B) / 2, "font-size": 15.5, "text-anchor": "middle",
+    transform: "rotate(-90 16 " + ((T + H - B) / 2) + ")"});
+  ay.textContent = m.y.label + " (" + dunit(m.y.unit) + ")"; svg.appendChild(ay);
+
+  if (cx0 !== null && cy0 !== null && cx0 >= xs[0] && cx0 <= xs[xs.length - 1]
+      && cy0 >= ys[0] && cy0 <= ys[ys.length - 1]){
+    const cx = X(cx0), cy = Y(cy0);
+    svg.appendChild(svgEl("circle", {cx: cx, cy: cy, r: 7, fill: "none",
+      stroke: "#fff", "stroke-width": 3}));
+    svg.appendChild(svgEl("circle", {cx: cx, cy: cy, r: 7, fill: "none",
+      stroke: "#111", "stroke-width": 1.5}));
+  }
+  // colour key
+  const kx = W - R + 26, kh = (H - T - B);
+  for (let i = 0; i < RAMP.length; i++)
+    svg.appendChild(svgEl("rect", {x: kx, y: T + kh * (1 - (i + 1) / RAMP.length),
+      width: 16, height: kh / RAMP.length + .5, fill: RAMP[i]}));
+  for (let i = 0; i <= RAMP.length; i += 2){
+    const v = Math.pow(10, Math.log10(zlo) + (Math.log10(zhi) - Math.log10(zlo))
+              * i / RAMP.length);
+    const t = svgEl("text", {x: kx + 21, y: T + kh * (1 - i / RAMP.length) + 4.5,
+      "font-size": 14, "text-anchor": "start"});
+    t.textContent = group(v, 3); svg.appendChild(t);
+  }
+  const kt = svgEl("text", {x: kx, y: T - 2, "font-size": 14, "text-anchor": "start"});
+  kt.textContent = FU(); svg.appendChild(kt);
+  host.textContent = ""; host.appendChild(svg);
+  host.appendChild(el("div", "legend",
+    "Predicted CHF over the plane, everything else held at the values on the left. "
+    + "The ring marks the point you entered."));
+}
+
+function drawDesign(host, d){
+  const W = host.clientWidth || 660, H = 300, L = 66, R = 18, T = 14, B = 46;
+  const xs = dArr(d.x, d.unit), cur = dval(d.current, d.unit);
+  const ms = d.margin, sf = d.safety_factor;
+  const xlo = Math.min.apply(null, xs), xhi = Math.max.apply(null, xs);
+  let ylo = Math.min.apply(null, ms.concat([sf])) * .85;
+  let yhi = Math.max.apply(null, ms.concat([sf])) * 1.12;
+  const X = v => L + (d.log ? (Math.log10(v) - Math.log10(xlo)) / (Math.log10(xhi / xlo))
+                            : (v - xlo) / (xhi - xlo || 1)) * (W - L - R);
+  const Y = v => T + (1 - (v - ylo) / (yhi - ylo || 1)) * (H - T - B);
+  const svg = svgEl("svg", {viewBox: "0 0 " + W + " " + H, height: H});
+
+  // the region that meets the target
+  svg.appendChild(svgEl("rect", {x: L, y: T, width: W - L - R, height: Math.max(0, Y(sf) - T),
+    fill: "var(--teal)", "fill-opacity": .10}));
+  for (const t of ticks(ylo, yhi, false, 5)){
+    svg.appendChild(svgEl("line", {x1: L, x2: W - R, y1: Y(t), y2: Y(t), stroke: "var(--rule-2)"}));
+    const tx = svgEl("text", {x: L - 12, y: Y(t) + 4.5, "font-size": 14, "text-anchor": "end"});
+    tx.textContent = sig(t, 3); svg.appendChild(tx);
+  }
+  for (const t of ticks(xlo, xhi, d.log, 5)){
+    if (t < xlo || t > xhi) continue;
+    const tx = svgEl("text", {x: X(t), y: H - B + 22, "font-size": 14, "text-anchor": "middle"});
+    tx.textContent = group(t, 3); svg.appendChild(tx);
+  }
+  const ax = svgEl("text", {x: (L + W - R) / 2, y: H - 6, "font-size": 15.5, "text-anchor": "middle"});
+  ax.textContent = d.label + " (" + dunit(d.unit) + ")"; svg.appendChild(ax);
+  const ay = svgEl("text", {x: 14, y: (T + H - B) / 2, "font-size": 15.5, "text-anchor": "middle",
+    transform: "rotate(-90 14 " + ((T + H - B) / 2) + ")"});
+  ay.textContent = "margin  q_LCB / q_op"; svg.appendChild(ay);
+
+  svg.appendChild(svgEl("line", {x1: L, x2: W - R, y1: Y(sf), y2: Y(sf), stroke: "var(--teal)",
+    "stroke-width": 2, "stroke-dasharray": "6 5"}));
+  const st = svgEl("text", {x: W - R, y: Y(sf) - 7, "font-size": 14, "text-anchor": "end",
+    fill: "var(--teal)", "font-weight": 600});
+  st.textContent = "target " + sig(sf, 3); svg.appendChild(st);
+
+  let path = "M" + X(xs[0]) + " " + Y(clamp(ms[0], ylo, yhi));
+  for (let i = 1; i < xs.length; i++) path += "L" + X(xs[i]) + " " + Y(clamp(ms[i], ylo, yhi));
+  svg.appendChild(svgEl("path", {d: path, fill: "none", stroke: "var(--accent)",
+    "stroke-width": 2.4, "stroke-linejoin": "round"}));
+
+  const mark = (v, col, label) => {
+    if (v === null || v === undefined || v < xlo || v > xhi) return;
+    svg.appendChild(svgEl("line", {x1: X(v), x2: X(v), y1: T, y2: H - B, stroke: col,
+      "stroke-opacity": .55, "stroke-dasharray": "3 4"}));
+    const t = svgEl("text", {x: X(v), y: T + 12, "font-size": 14, "text-anchor": "middle",
+      fill: col, "font-weight": 600});
+    t.textContent = label; svg.appendChild(t);
+  };
+  mark(cur, "var(--ink)", "now");
+  mark(dval(d.required, d.unit), "var(--accent)", "needed");
+  mark(dval(d.safe_from, d.unit), "var(--teal)", "limit");
+  mark(dval(d.safe_to, d.unit), "var(--teal)", "limit");
+  host.textContent = ""; host.appendChild(svg);
+  host.appendChild(el("div", "legend",
+    "Margin is the lower conformal bound divided by your operating flux, so the shaded band is "
+    + "the region that meets the target with the model's own uncertainty already subtracted."));
+}
+
+/* ====================================================================
+   5. Result
+   ==================================================================== */
+function renderResult(r, keepTrend){
+  S.result = r;
+  S.measuredShown = !!(S.example && sameAsExample());
+  const host = $("#result");
+  host.textContent = "";
+
+  const hero = el("div", "hero");
+  const left = el("div");
+  const big = el("div", "big num", group(fD(r.chf_kW_m2), 4));
+  big.appendChild(el("span", null, FU()));
+  left.appendChild(big);
+  const band = el("div", "band");
+  band.textContent = "predicted critical heat flux, five-seed mean";
+  left.appendChild(band);
+  hero.appendChild(left);
+  if (S.measuredShown){
+    const m = S.example.measured_CHF_kW_m2, box = el("div", "vs");
+    box.appendChild(el("b", "num", group(fD(m), 4)));
+    const line = el("div");
+    line.innerHTML = "measured &middot; <em>" + sig(Math.abs(r.chf_kW_m2 - m) / m * 100, 2)
+      + "%</em> error";
+    box.appendChild(line);
+    box.appendChild(el("div", "sub2", "#" + S.example.row_id + " · " + splitNote(S.example)));
+    hero.appendChild(box);
+  }
+  host.appendChild(hero);
+
+  const out = r.derived.outside || [];
+  if (out.length){
+    const f = el("div", "flagline");
+    f.innerHTML = "<b>Extrapolation.</b> " + out.length
+      + (out.length === 1 ? " input is" : " inputs are")
+      + " outside what this section was trained on. The prediction is still made — tap for details.";
+    const ul = el("ul");
+    out.forEach(o => ul.appendChild(el("li", null, o.kind === "range"
+      ? o.name + " " + group(dval(o.value, o.unit), 4) + " " + dunit(o.unit)
+        + " — the corpus has " + group(dval(o.min, o.unit), 3) + " to "
+        + group(dval(o.max, o.unit), 3) + " " + dunit(o.unit)
+      : o.text)));
+    f.appendChild(ul);
+    f.addEventListener("click", () => f.classList.toggle("open"));
+    host.appendChild(f);
+  }
+  for (const n of (r.derived.warnings || []).concat(r.derived.notes || []))
+    host.appendChild(el("div", "msg note", n));
+
+  // the four delivered outputs and nothing else: the prediction above, then the
+  // two conformal bounds and the out-of-distribution score
+  const tiles = el("div", "tiles");
+  const tile = (k, v, n, cls) => {
+    const t = el("div", "tile" + (cls ? " " + cls : ""));
+    t.append(el("div", "k", k), el("div", "v num", v), el("div", "n", n));
+    return t;
+  };
+  const c = r.interval.confidence;
+  tiles.appendChild(tile("Lower bound", group(fD(r.interval.lower_kW_m2), 4),
+    c + "% conformal, " + FU()));
+  tiles.appendChild(tile("Upper bound", group(fD(r.interval.upper_kW_m2), 4),
+    c + "% conformal, " + FU()));
+  const p = r.novelty.percentiles;
+  const scale = r.novelty.level === "in" ? "below " + sig(p["90"], 2) + ", where 9 in 10 held-out "
+                  + "records sit"
+              : r.novelty.level === "edge" ? "between " + sig(p["90"], 2) + " and " + sig(p["99"], 2)
+                  + ", the top tenth of held-out records"
+              : "above " + sig(p["99"], 2) + ", beyond all but 1% of held-out records";
+  const nv = tile("OOD score", sig(r.novelty.score, 3), r.novelty.label + " — " + scale,
+                  r.novelty.level);
+  const meter = el("div"); nv.appendChild(meter);
+  tiles.appendChild(nv);
+  if (r.margin)
+    tiles.appendChild(tile("Margin to CHF", sig(r.margin.DNBR, 3) + "×",
+      "at least " + sig(r.margin.DNBR_lower, 3) + "× the operating flux",
+      r.margin.DNBR_lower < 1 ? "out" : "in"));
+  host.appendChild(tiles);
+
+  const plot = el("div", "block");
+  host.appendChild(plot);
+  drawInterval(plot, r);
+  drawNovelty(meter, r.novelty);
+
+  renderDerived(r.derived, r.record);
+  const ap = $("#anchorPlot");
+  drawAnchors(ap, r);
+  S.redraw = () => { drawInterval(plot, r); drawNovelty(meter, r.novelty); drawAnchors(ap, r); };
+  $("#sweepPanel").style.display = "";
+  if (!keepTrend){
+    drawTrend();                    // the curve or the map follows every prediction
+    loadAttribution();
+    runDesign();
+  }
+}
+
+function renderDerived(d, record){
+  const host = $("#derived");
+  host.textContent = "";
+  for (const g of d.groups){
+    const col = el("div");
+    const h = el("div", "colhead", g.title + " ");
+    h.appendChild(el("span", null, g.note));
+    col.appendChild(h);
+    const t = el("table", "kv");
+    for (const [k, v, u] of g.rows){
+      const tr = el("tr");
+      tr.appendChild(el("td", "k", k));
+      const td = el("td", "v num" + (v === null || v === undefined ? " off" : ""));
+      td.textContent = (v === null || v === undefined) ? "no token" : sig(dval(v, u), 4);
+      tr.appendChild(td);
+      tr.appendChild(el("td", "u", dunit(u)));
+      t.appendChild(tr);
+    }
+    col.appendChild(t); host.appendChild(col);
+  }
+  const col = el("div");
+  const h = el("div", "colhead", "Physics anchors ");
+  h.appendChild(el("span", null, "closed form, never measured"));
+  col.appendChild(h);
+  const t = el("table", "kv");
+  for (const a of d.anchors){
+    const tr = el("tr");
+    tr.appendChild(el("td", "k", a.name));
+    const td = el("td", "v num" + (a.value === null ? " off" : ""));
+    td.textContent = a.value === null ? "no token" : group(fD(a.value), 4);
+    tr.appendChild(td);
+    tr.appendChild(el("td", "u", FU()));
+    t.appendChild(tr);
+  }
+  col.appendChild(t); host.appendChild(col);
+  $("#tokenNote").textContent = d.n_defined + " of 62 features defined";
+  $("#rawRecord").textContent = JSON.stringify(record, null, 1);
+  $("#detailPanel").style.display = "";
+  if (d.properties) S.props = d.properties;
+  fillCustomFrom(d.properties);
+}
+
+const FEAT_LABEL = {
+  P_kPa: "pressure", P_red: "reduced pressure", P_rho_l: "liquid density",
+  P_rho_v: "vapour density", P_hfg: "latent heat", P_sigma: "surface tension",
+  P_mu_l: "liquid viscosity", P_cp_l: "heat capacity", P_k_l: "conductivity",
+  rho_ratio: "density ratio", Pr_l: "Prandtl number", capillary_length_m: "capillary length",
+  T_in_C: "inlet temperature", DT_sub_K: "subcooling", DH_in_kJ_kg: "subcooling enthalpy",
+  DH_norm: "subcooling / latent heat", gravity_m_s2: "gravity", gravity_ratio: "gravity ratio",
+  is_microgravity: "microgravity flag", G_kg_m2s: "mass flux", Re_l: "Reynolds number",
+  We_l: "Weber number", char_length_m: "channel scale", heated_length_m: "heated length",
+  L_over_D: "heated-length ratio", Bond: "Bond number", confinement_Co: "confinement number",
+  anchor_zuber_kW_m2: "Zuber correlation", anchor_bowe_kW_m2: "Bo–We flow-scaling token",
+  anchor_bowring_kW_m2: "Bowring token", anchor_zuber_scaled_kW_m2: "scaled Zuber token",
+  fluid: "fluid identity", fluid_family: "fluid family", geometry_type: "test section",
+  orientation: "flow configuration"
+};
+function renderAttribution(a){
+  const host = $("#attrOut");
+  host.textContent = "";
+  const top = a.features.slice(0, 10);
+  const max = Math.max.apply(null, top.map(f => Math.abs(f.delta_pct))) || 1;
+  const box = el("div", "attr");
+  for (const f of top){
+    const w = Math.abs(f.delta_pct) / max * 50;
+    box.appendChild(el("div", "n", FEAT_LABEL[f.feature] || f.feature));
+    const bar = el("div", "b");
+    const i = el("i");
+    i.style.background = f.delta_pct < 0 ? "var(--accent)" : "var(--teal)";
+    i.style.left = (f.delta_pct < 0 ? 50 - w : 50) + "%";
+    i.style.width = w + "%";
+    bar.appendChild(i);
+    box.appendChild(bar);
+    box.appendChild(el("div", "p", (f.delta_pct > 0 ? "+" : "") + sig(f.delta_pct, 2) + "%"));
+  }
+  host.appendChild(box);
+  host.appendChild(el("div", "legend",
+    "Change in the prediction when that one token is withheld, as a record that never measured "
+    + "it would arrive. The feature layer is deliberately over-complete, so these are marginal "
+    + "effects rather than an additive split. " + a.n_features + " tokens tested."));
+}
+async function loadAttribution(){
+  if (!$("#attrBox").open || !S.result) return;
+  try {
+    renderAttribution(await api("/api/attribution", payload()));
+  } catch (e){
+    $("#attrOut").textContent = "";
+    $("#attrOut").appendChild(el("div", "msg err", e.message));
+  }
+}
+
+function sameAsExample(){
+  if (!S.example) return false;
+  const a = payload(), b = S.example.payload;
+  if (a.fluid !== b.fluid || a.custom_fluid) return false;
+  const near = (x, y) => (x === null || x === undefined) === (y === null || y === undefined)
+    && (x === null || x === undefined || Math.abs(x - y) <= Math.abs(y) * 5e-3 + 1e-9);
+  if (!near(a.P_kPa, b.P_kPa) || !near(a.G_kg_m2s, b.G_kg_m2s)
+      || !near(a.heated_length_m, b.heated_length_m) || !near(a.DT_sub_K, b.DT_sub_K)) return false;
+  for (const k in b.geometry)
+    if (typeof b.geometry[k] === "number" && !near(a.geometry[k], b.geometry[k])) return false;
+  return true;
+}
+
+/* ====================================================================
+   6. Actions
+   ==================================================================== */
+async function run(){
+  if (S.busy) return;
+  S.busy = true;
+  const btn = $("#run"); btn.disabled = true; btn.textContent = "Predicting…";
+  try {
+    const r = await api("/api/predict", payload());
+    renderResult(r);
+    markRanges();
+  } catch (e){
+    $("#result").textContent = "";
+    const m = el("div", "msg err");
+    m.innerHTML = "<b>Cannot build this record.</b> " + e.message;
+    m.style.margin = "22px";
+    $("#result").appendChild(m);
+  } finally { S.busy = false; btn.disabled = false; btn.textContent = "Predict"; }
+}
+
+let deriveTimer = null;
+function scheduleDerive(){
+  markRanges();
+  clearTimeout(deriveTimer);
+  deriveTimer = setTimeout(async () => {
+    try {
+      const d = await api("/api/derive", payload());
+      const inlet = {};
+      for (const g of d.derived.groups) for (const r of g.rows) inlet[r[0]] = r[1];
+      if (S.mode === "T_in") $("#in_DT_sub_K").value = numVal(inlet["dT_sub"]);
+      else if (S.mode === "DT_sub") $("#in_T_in_C").value = numVal(inlet["T_in"]);
+      if (S.result) renderDerived(d.derived, d.record);
+    } catch (e){ /* an incomplete form while typing is normal */ }
+  }, 280);
+}
+
+function varUnit(key){
+  const v = (S.schema.sweep_variables || []).find(v => v.key === key);
+  return v ? v.unit : "";
+}
+function canon(i){
+  if (!i || i.value === "") return null;
+  const v = Number(i.value);
+  return i.dataset.conv ? v * ufac(i.dataset.conv) : v;
+}
+function setUnit(kind, key){
+  if (!UNITS[kind][key] || S.unit[kind] === key) return;
+  const oldF = ufac(kind);
+  S.unit[kind] = key;
+  const newF = ufac(kind);
+  document.querySelectorAll("input[data-conv='" + kind + "']").forEach(i => {
+    if (i.value !== "") i.value = numVal(Number(i.value) * oldF / newF);
+  });
+  refreshUnitLabels();
+  markRanges();
+  if (S.geom) updateGeomNote();
+  if (S.result){
+    renderResult(S.result, true);
+    if (S.redrawSweep) S.redrawSweep();
+    if (S.redrawDesign) S.redrawDesign();
+  }
+}
+function refreshUnitLabels(){
+  document.querySelectorAll("[data-unit]").forEach(n => {
+    if (n.tagName !== "INPUT") n.textContent = dunit(n.dataset.unit);
+  });
+}
+
+function buildSweepVars(){
+  const sel = $("#sweepVar"), prev = sel.value;
+  sel.textContent = "";
+  for (const v of S.schema.sweep_variables){
+    if (!S.geom.flow && v.key !== "P_kPa" && v.key !== "DT_sub_K") continue;
+    if (v.key === "char_length_mm" && !S.geom.char_length_from && !S.geom.char_length_input) continue;
+    sel.appendChild(new Option(v.label, v.key));
+  }
+  sel.value = [].some.call(sel.options, o => o.value === prev) ? prev
+            : (S.geom.flow ? "G_kg_m2s" : "P_kPa");
+  fillSweepRange();
+}
+function currentValue(key){
+  if (key === "char_length_mm")
+    return S.geom.char_length_input ? val("char_length_mm") : val(S.geom.char_length_from);
+  return val(key);
+}
+function fillSweepRange(){
+  const key = $("#sweepVar").value, u = varUnit(key), kind = uconv(u);
+  const [lo, hi] = axisRange(key);
+  for (const i of [$("#sweepMin"), $("#sweepMax")]){
+    if (kind) i.dataset.conv = kind; else delete i.dataset.conv;
+    i.dataset.unit = u;
+  }
+  $("#sweepMin").value = numVal(dval(lo, u), 4);
+  $("#sweepMax").value = numVal(dval(hi, u), 4);
+}
+function buildDesignVars(){
+  const sel = $("#designVar"), prev = sel.value;
+  sel.textContent = "";
+  for (const v of S.schema.sweep_variables){
+    if (!S.geom.flow && v.key !== "P_kPa" && v.key !== "DT_sub_K") continue;
+    if (v.key === "char_length_mm" && !S.geom.char_length_from && !S.geom.char_length_input)
+      continue;
+    sel.appendChild(new Option(v.label, v.key));
+  }
+  sel.value = [].some.call(sel.options, o => o.value === prev) ? prev
+            : (S.geom.flow ? "G_kg_m2s" : "DT_sub_K");
+}
+async function runDesign(){
+  const host = $("#designOut"), panel = $("#designPanel");
+  panel.style.display = "";
+  const p = payload();
+  if (!p.q_op_kW_m2){
+    host.textContent = "";
+    host.appendChild(el("div", "msg note",
+      "Enter an operating heat flux on the left and this panel sizes the design: how much flux "
+      + "the predicted limit allows, and how far one input has to move to keep the margin."));
+    S.redrawDesign = null;
+    return;
+  }
+  const btn = $("#runDesign"); btn.disabled = true; btn.textContent = "…";
+  try {
+    const v = $("#designVar").value;
+    let [x0, x1] = axisRange(v);
+    // the operating point must lie inside the scanned range, or the answer
+    // would be measured against the edge of the corpus instead of against it
+    const cur = currentValue(v);
+    if (cur !== null && isFinite(cur)){
+      x0 = Math.min(x0, cur * (cur > 0 ? .5 : 1.5));
+      x1 = Math.max(x1, cur * (cur > 0 ? 1.6 : .5));
+      if (v === "G_kg_m2s") x0 = Math.max(x0, 1);
+    }
+    Object.assign(p, {x: v, x_min: x0, x_max: x1, x_n: 36,
+                      safety_factor: Number($("#designSF").value) || 1.3});
+    const d = await api("/api/design", p);
+    renderDesign(d);
+    S.redrawDesign = () => renderDesign(d);
+  } catch (e){
+    host.textContent = "";
+    host.appendChild(el("div", "msg err", e.message));
+  } finally { btn.disabled = false; btn.textContent = "Redraw"; }
+}
+function renderDesign(d){
+  const host = $("#designOut");
+  host.textContent = "";
+  const box = el("div", "answer");
+  const line = (cls, html) => { const a = el("div", "a " + cls); a.innerHTML = html;
+    box.appendChild(a); };
+  const U = FU(), L = d.label.toLowerCase(), VU = dunit(d.unit);
+  line("", "Allowable operating flux at a factor of " + sig(d.safety_factor, 3)
+    + ": <b>" + group(fD(d.allowable_q_op_kW_m2), 4) + " " + U + "</b> "
+    + "<span>— the lower bound divided by the factor</span>");
+  const now = "Your " + group(fD(d.q_op_kW_m2), 4) + " " + U + " sits at <b>"
+    + sig(d.margin_now, 3) + "×</b> the lower bound. ";
+  if (d.satisfied === true){
+    let tail = "The target is met.";
+    if (d.safe_from !== null && d.safe_to !== null)
+      tail = "The target holds while the " + L + " stays between <b>"
+           + group(dval(d.safe_from, d.unit), 4) + "</b> and <b>"
+           + group(dval(d.safe_to, d.unit), 4) + "</b> " + VU + ".";
+    else if (d.safe_from !== null)
+      tail = "The " + L + " may fall to <b>" + group(dval(d.safe_from, d.unit), 4) + " " + VU
+           + "</b> before the target is lost.";
+    else if (d.safe_to !== null)
+      tail = "The " + L + " may rise to <b>" + group(dval(d.safe_to, d.unit), 4) + " " + VU
+           + "</b> before the target is lost.";
+    else
+      tail = "The target holds across the whole range tested.";
+    line("good", now + tail);
+  } else if (d.required !== null && d.required !== undefined){
+    line("warn", now + "To reach the target, " + (d.direction === "increase" ? "raise" : "lower")
+      + " the " + L + " to <b>" + group(dval(d.required, d.unit), 4) + " " + VU + "</b>.");
+  } else {
+    line("bad", now + "No value of the " + L + " in the range tested reaches the target: "
+      + "the operating flux is too high for this configuration.");
+  }
+  host.appendChild(box);
+  const plot = el("div");
+  host.appendChild(plot);
+  drawDesign(plot, d);
+}
+
+function buildMapVars(){
+  const opts = S.schema.sweep_variables.filter(v => {
+    if (!S.geom.flow && v.key !== "P_kPa" && v.key !== "DT_sub_K") return false;
+    if (v.key === "char_length_mm" && !S.geom.char_length_from && !S.geom.char_length_input)
+      return false;
+    return true;
+  });
+  for (const [id, pref] of [["#mapX", "G_kg_m2s"], ["#mapY", "DT_sub_K"]]){
+    const sel = $(id), prev = sel.value;
+    sel.textContent = "";
+    for (const v of opts) sel.appendChild(new Option(v.label, v.key));
+    sel.value = [].some.call(sel.options, o => o.value === prev) ? prev
+              : (opts.some(v => v.key === pref) ? pref : opts[0].key);
+  }
+  if ($("#mapX").value === $("#mapY").value){
+    const other = opts.find(v => v.key !== $("#mapX").value);
+    if (other) $("#mapY").value = other.key;
+  }
+}
+// a corpus range can be a single value (one pressure, one channel width); widen
+// it around that value so the sweep still has something to walk along
+function widen(lo, hi, fallback){
+  if (lo === undefined || lo === null || hi === undefined || hi === null || !(hi > lo)){
+    const c = (lo === undefined || lo === null || lo === 0 ? (fallback || 1) : lo);
+    lo = c * .6; hi = c * 1.6;
+    if (!(hi > lo)){ lo = c - 1; hi = c + 1; }
+  }
+  return [lo, hi];
+}
+function axisRange(key){
+  const r = S.geom.ranges[key] || {};
+  let [lo, hi] = widen(r.p1, r.p99, currentValue(key));
+  if (key === "G_kg_m2s") lo = Math.max(lo, 1);
+  return [lo, hi];
+}
+async function runMap(){
+  if (!S.result) return;
+  const btn = $("#runMap"); btn.disabled = true; btn.textContent = "…";
+  try {
+    const p = payload();
+    const xv = $("#mapX").value, yv = $("#mapY").value;
+    if (xv === yv) throw new Error("choose two different variables");
+    const [x0, x1] = axisRange(xv), [y0, y1] = axisRange(yv);
+    Object.assign(p, {x: xv, x_min: x0, x_max: x1, x_n: 32,
+                      y: yv, y_min: y0, y_max: y1, y_n: 24});
+    const m = await api("/api/map", p);
+    m.cx = currentValue(xv); m.cy = currentValue(yv);
+    drawMap($("#sweepOut"), m);
+    S.redrawSweep = () => drawMap($("#sweepOut"), m);
+  } catch (e){
+    $("#sweepOut").textContent = "";
+    $("#sweepOut").appendChild(el("div", "msg err", e.message));
+  } finally { btn.disabled = false; btn.textContent = "Redraw"; }
+}
+function drawTrend(){ return S.mapMode ? runMap() : runSweep(); }
+
+let sweepTimer = null;
+function scheduleSweep(){
+  clearTimeout(sweepTimer);
+  sweepTimer = setTimeout(drawTrend, 260);
+}
+async function runSweep(){
+  if (!S.result) return;
+  const btn = $("#runSweep"); btn.disabled = true; btn.textContent = "…";
+  try {
+    const p = payload();
+    p.variable = $("#sweepVar").value;
+    p.min = canon($("#sweepMin")); p.max = canon($("#sweepMax")); p.n = 48;
+    const s = await api("/api/sweep", p);
+    s.current = currentValue(p.variable);
+    drawSweep($("#sweepOut"), s);
+    S.redrawSweep = () => drawSweep($("#sweepOut"), s);
+  } catch (e){
+    $("#sweepOut").textContent = "";
+    $("#sweepOut").appendChild(el("div", "msg err", e.message));
+  } finally { btn.disabled = false; btn.textContent = "Redraw"; }
+}
+
+/* ====================================================================
+   6b. Batch: a table of operating points in, a table of predictions out
+   ==================================================================== */
+function parseCSV(text){
+  text = String(text).replace(/^\uFEFF/, "");
+  const rows = [];
+  let row = [], field = "", quoted = false;
+  for (let i = 0; i < text.length; i++){
+    const c = text[i];
+    if (quoted){
+      if (c === '"'){ if (text[i + 1] === '"'){ field += '"'; i++; } else quoted = false; }
+      else field += c;
+    } else if (c === '"') quoted = true;
+    else if (c === "," || c === "\t"){ row.push(field); field = ""; }
+    else if (c === "\n"){ row.push(field); rows.push(row); row = []; field = ""; }
+    else if (c !== "\r") field += c;
+  }
+  if (field !== "" || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(c => String(c).trim() !== ""));
+}
+function rowsFromCSV(text){
+  const raw = parseCSV(text);
+  if (raw.length < 2) throw new Error("the file needs a header row and at least one data row");
+  const head = raw[0].map(h => h.trim());
+  return {head: head, rows: raw.slice(1).map(r => {
+    const o = {};
+    head.forEach((h, i) => { if (h) o[h] = (r[i] === undefined ? "" : r[i].trim()); });
+    return o;
+  })};
+}
+function csvCell(v){
+  if (v === null || v === undefined) return "";
+  const s = String(v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function fileText(f){
+  if (f.text) return f.text();
+  return new Promise((res, rej) => {                 // older Safari
+    const r = new FileReader();
+    r.onload = () => res(String(r.result));
+    r.onerror = () => rej(new Error("could not read the file"));
+    r.readAsText(f);
+  });
+}
+function download(name, text){
+  const a = el("a");
+  a.href = URL.createObjectURL(new Blob([text], {type: "text/csv;charset=utf-8"}));
+  a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 400);
+}
+function templateCSV(){
+  const g = S.geom, p = payload();
+  const cols = ["id", "fluid", "geometry_type", "orientation", "P_kPa", "DT_sub_K"];
+  if (g.flow) cols.push("G_kg_m2s", "heated_length_m");
+  for (const f of g.fields) cols.push(f.key);
+  for (const c of g.categoricals) cols.push(c.key);
+  if (g.char_length_input) cols.push("char_length_mm");
+  cols.push("q_op_kW_m2");
+  const get = k => {
+    if (k === "id") return "case-1";
+    if (k === "q_op_kW_m2") return p.q_op_kW_m2 === undefined ? "" : p.q_op_kW_m2;
+    if (p[k] !== undefined && p[k] !== null) return p[k];
+    const v = (p.geometry || {})[k];
+    return (v === null || v === undefined) ? "" : v;
+  };
+  return cols.join(",") + "\n" + cols.map(k => csvCell(get(k))).join(",") + "\n";
+}
+async function runBatch(text, name){
+  const status = $("#batchStatus"), out = $("#batchOut");
+  let parsed;
+  try { parsed = rowsFromCSV(text); }
+  catch (e){ status.textContent = e.message; return; }
+  if (parsed.rows.length > 2000){
+    status.textContent = "at most 2,000 rows in one file, " + parsed.rows.length + " found";
+    return;
+  }
+  status.textContent = "predicting " + parsed.rows.length.toLocaleString() + " rows…";
+  out.textContent = "";
+  try {
+    const r = await api("/api/batch", {base: payload(), rows: parsed.rows, alpha: S.alpha});
+    S.batch = {name: name || "batch", head: parsed.head, rows: parsed.rows, res: r};
+    $("#dlBtn").disabled = false;
+    status.innerHTML = "<b>" + r.n_ok.toLocaleString() + "</b> of " + r.n.toLocaleString()
+      + " rows predicted"
+      + (r.n_failed ? ", <b>" + r.n_failed + "</b> could not be built" : "")
+      + (r.ignored_columns.length ? ". Columns ignored: " + r.ignored_columns.join(", ") : "")
+      + ". Bounds at " + r.confidence + "% confidence.";
+    renderBatch();
+  } catch (e){
+    status.textContent = e.message;
+  }
+}
+function renderBatch(){
+  const b = S.batch, out = $("#batchOut");
+  out.textContent = "";
+  const idOf = (row, i) => row.id || row.row_id || row.label || row.name || String(i + 1);
+  const anyMargin = b.res.results.some(r => r && r.DNBR !== undefined);
+  const head = ["row", "CHF " + FU(), "lower", "upper", "OOD", "outside"]
+    .concat(anyMargin ? ["margin"] : []);
+  const t = el("table", "batch");
+  const hr = el("tr");
+  head.forEach(h => hr.appendChild(el("th", null, h)));
+  t.appendChild(hr);
+  const show = Math.min(b.rows.length, 12);
+  for (let i = 0; i < show; i++){
+    const r = b.res.results[i], tr = el("tr");
+    tr.appendChild(el("td", null, idOf(b.rows[i], i)));
+    if (!r || !r.ok){
+      const td = el("td", "bad", r ? r.error : "no result");
+      td.setAttribute("colspan", String(head.length - 1));
+      tr.appendChild(td);
+    } else {
+      tr.appendChild(el("td", null, group(fD(r.chf_kW_m2), 4)));
+      tr.appendChild(el("td", null, group(fD(r.lower_kW_m2), 4)));
+      tr.appendChild(el("td", null, group(fD(r.upper_kW_m2), 4)));
+      tr.appendChild(el("td", null, sig(r.ood_score, 3)));
+      tr.appendChild(el("td", null, r.outside_corpus ? String(r.outside_corpus) : "—"));
+      if (anyMargin) tr.appendChild(el("td", null,
+        r.DNBR === undefined ? "—" : sig(r.DNBR, 3) + "×"));
+    }
+    t.appendChild(tr);
+  }
+  out.appendChild(t);
+  if (b.rows.length > show)
+    out.appendChild(el("div", "legend", "showing the first " + show + " of "
+      + b.rows.length.toLocaleString() + " rows — the full table is in the download"));
+}
+function downloadBatch(){
+  const b = S.batch;
+  if (!b) return;
+  const outCols = ["chf_kW_m2", "lower_kW_m2", "upper_kW_m2", "ood_score", "ood_level",
+                   "anchor_zuber_kW_m2", "anchor_kandlikar_kW_m2", "anchor_bowring_kW_m2",
+                   "DNBR", "DNBR_lower", "outside_corpus", "outside", "error"];
+  const lines = [b.head.concat(outCols).map(csvCell).join(",")];
+  b.rows.forEach((row, i) => {
+    const r = b.res.results[i] || {};
+    const cells = b.head.map(h => csvCell(row[h]));
+    outCols.forEach(c => cells.push(csvCell(r[c] === undefined ? "" : r[c])));
+    lines.push(cells.join(","));
+  });
+  download(b.name.replace(/\.csv$/i, "") + "_chfpt.csv", lines.join("\n") + "\n");
+}
+
+/* ====================================================================
+   7. Boot
+   ==================================================================== */
+async function boot(){
+  const s = await api("/api/schema");
+  S.schema = s;
+  const d = s.dataset, m = s.model, rt = s.runtime;
+  $("#status").textContent = rt.seeds.length + " seeds · " + rt.parameters_M + " M · "
+    + (rt.device.indexOf("cuda") === 0 ? "GPU" : "CPU");
+
+  for (const [id, kind] of [["#unitFlux", "flux"], ["#unitPress", "press"]]){
+    const sel = $(id);
+    for (const k in UNITS[kind]) sel.appendChild(new Option(unit(k), k));
+    sel.value = S.unit[kind];
+    sel.addEventListener("change", () => setUnit(kind, sel.value));
+  }
+  refreshUnitLabels();
+
+  const gsel = $("#geometry");
+  for (const grp of s.geometry_groups){
+    const og = el("optgroup");
+    const inside = s.geometries.filter(g => g.group === grp);
+    og.label = grp + "  (" + inside.length + ")";
+    for (const g of inside) og.appendChild(new Option(g.label, g.key));
+    gsel.appendChild(og);
+  }
+  gsel.addEventListener("change", () => { selectGeometry(gsel.value, true); run(); });
+
+  $("#fluid").addEventListener("change", () => {
+    S.custom = $("#fluid").value === CUSTOM;
+    buildCustomFluid();
+    if (S.custom) fillCustomFrom(S.props);
+    if (S.mode === "both") S.mode = "T_in";
+    run();
+  });
+
+  const seg = $("#alphaSeg");
+  for (const a of s.alphas){
+    const b = el("button", null, Math.round((1 - a) * 100) + "%");
+    b.type = "button";
+    b.setAttribute("aria-pressed", String(Math.abs(a - .10) < 1e-9));
+    b.addEventListener("click", () => {
+      S.alpha = a;
+      [].forEach.call(seg.children, c => c.setAttribute("aria-pressed", String(c === b)));
+      if (S.result) run();
+    });
+    seg.appendChild(b);
+  }
+
+  $("#form").addEventListener("submit", e => { e.preventDefault(); run(); });
+  $("#form").addEventListener("input", scheduleDerive);
+  // the margin tile and the design panel depend on the operating flux, and it
+  // does not change the record, so a re-run is cheap and expected
+  let qopTimer = null;
+  $("#in_q_op").addEventListener("input", () => {
+    clearTimeout(qopTimer);
+    qopTimer = setTimeout(() => { if (S.result) run(); }, 450);
+  });
+  $("#loadExample").addEventListener("click", rollExample);
+  $("#runSweep").addEventListener("click", runSweep);
+  $("#runMap").addEventListener("click", runMap);
+  $("#sweepVar").addEventListener("change", () => { fillSweepRange(); runSweep(); });
+  $("#sweepMin").addEventListener("input", scheduleSweep);
+  $("#sweepMax").addEventListener("input", scheduleSweep);
+  $("#mapX").addEventListener("change", runMap);
+  $("#mapY").addEventListener("change", runMap);
+  $("#attrBox").addEventListener("toggle", loadAttribution);
+  $("#batchPanel").style.display = "";
+  $("#tmplBtn").addEventListener("click", () => download("chfpt_template.csv", templateCSV()));
+  $("#pickBtn").addEventListener("click", () => $("#csvFile").click());
+  $("#csvFile").addEventListener("change", async e => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    if (f.size > 4e6){ $("#batchStatus").textContent = "the file is larger than 4 MB"; return; }
+    runBatch(await fileText(f), f.name);
+    e.target.value = "";
+  });
+  $("#dlBtn").addEventListener("click", downloadBatch);
+  const body = $("#batchBody");
+  body.addEventListener("dragover", e => { e.preventDefault(); body.classList.add("drop"); });
+  body.addEventListener("dragleave", () => body.classList.remove("drop"));
+  body.addEventListener("drop", async e => {
+    e.preventDefault(); body.classList.remove("drop");
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) runBatch(await fileText(f), f.name);
+  });
+  $("#runDesign").addEventListener("click", runDesign);
+  $("#designVar").addEventListener("change", runDesign);
+  $("#designSF").addEventListener("change", runDesign);
+  const modes = $("#sweepMode");
+  modes.addEventListener("click", e => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    S.mapMode = b.dataset.mode === "map";
+    [].forEach.call(modes.children, c => c.setAttribute("aria-pressed", String(c === b)));
+    $("#curveBar").style.display = S.mapMode ? "none" : "";
+    $("#mapBar").style.display = S.mapMode ? "grid" : "none";
+    $("#sweepNote").textContent = S.mapMode
+      ? "two inputs varied, everything else held fixed"
+      : "one input varied, everything else held fixed";
+    drawTrend();
+  });
+
+  $("#foot").innerHTML =
+    "<b>CHF-PT</b> — a physics-anchored pre-trained Transformer for critical heat flux across "
+    + "fluids, geometries and gravity levels. Zhou et al., under review. Serving the five "
+    + "released checkpoints; predictions outside the pre-trained corpus are extrapolation.";
+
+  selectGeometry("tube", true);
+  await run();
+}
+
+let redrawTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(redrawTimer);
+  redrawTimer = setTimeout(() => {
+    if (S.redraw) S.redraw();
+    if (S.redrawSweep) S.redrawSweep();
+  }, 150);
+});
+boot().catch(e => {
+  $("#result").innerHTML = '<div class="msg err" style="margin:22px">Could not reach the server: '
+    + e.message + "</div>";
+});
+</script>
+</body>
+</html>

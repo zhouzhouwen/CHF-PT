@@ -1,0 +1,2038 @@
+{
+ "geometry_groups": [
+  "Channels",
+  "Enhanced and sprayed surfaces",
+  "Fusion high-heat-flux mock-ups"
+ ],
+ "dataset": {
+  "name": "CHF_dataset_v1.1",
+  "records": 32271,
+  "domains": 19,
+  "fluids": 7,
+  "geometries": 15,
+  "CHF_range_kW_m2": [
+   12.0,
+   41900.0
+  ],
+  "split": {
+   "train": 22600,
+   "val": 3227,
+   "cal": 3225,
+   "test": 3219
+  }
+ },
+ "model": {
+  "name": "CHF-PT",
+  "seeds": 5,
+  "parameters_M": 17.81,
+  "target": "ln(CHF) - ln(q_Zuber)",
+  "test_micro_mape": 6.969252574078736,
+  "test_macro_mape": 16.803665792036163,
+  "coverage": {
+   "0.2": 0.7927927927927928,
+   "0.1": 0.9046287666977322,
+   "0.05": 0.9534016775396086
+  },
+  "rel_width": {
+   "0.2": 0.10153093631554942,
+   "0.1": 0.1370672173467303,
+   "0.05": 0.17720756519537897
+  }
+ },
+ "ood": {
+  "percentiles": {
+   "50": 3.5835631221575603,
+   "75": 4.807463291342161,
+   "90": 7.2409658114459345,
+   "95": 10.09649159147901,
+   "99": 16.397216052343232
+  }
+ },
+ "alphas": [
+  0.2,
+  0.1,
+  0.05
+ ],
+ "fluids": [
+  {
+   "key": "water",
+   "P_crit_kPa": 22064.0,
+   "P_table_kPa": [
+    50.0,
+    21500.0
+   ],
+   "P_corpus_kPa": [
+    91.03043913624296,
+    20680.0
+   ],
+   "n_records": 31741,
+   "source": "CoolProp Water"
+  },
+  {
+   "key": "R123",
+   "P_crit_kPa": 3662.0,
+   "P_table_kPa": [
+    60.0,
+    3200.0
+   ],
+   "P_corpus_kPa": [
+    174.0,
+    680.0
+   ],
+   "n_records": 257,
+   "source": "CoolProp R123"
+  },
+  {
+   "key": "R134a",
+   "P_crit_kPa": 4059.0,
+   "P_table_kPa": [
+    60.0,
+    3600.0
+   ],
+   "P_corpus_kPa": [
+    109.0,
+    334.0
+   ],
+   "n_records": 29,
+   "source": "CoolProp R134a"
+  },
+  {
+   "key": "FC-72",
+   "P_crit_kPa": 1830.0,
+   "P_table_kPa": [
+    30.0,
+    1600.0
+   ],
+   "P_corpus_kPa": [
+    97.52322357491725,
+    101.325
+   ],
+   "n_records": 187,
+   "source": "CoolProp n-Perfluorohexane + 3M datasheet transport properties"
+  },
+  {
+   "key": "FC-77",
+   "P_crit_kPa": 1620.0,
+   "P_table_kPa": [
+    80.0,
+    130.0
+   ],
+   "P_corpus_kPa": [
+    101.325,
+    101.325
+   ],
+   "n_records": 18,
+   "source": "3M datasheet, single point at 1 atm"
+  },
+  {
+   "key": "PF-5052",
+   "P_crit_kPa": 2050.0,
+   "P_table_kPa": [
+    80.0,
+    130.0
+   ],
+   "P_corpus_kPa": [
+    101.325,
+    101.325
+   ],
+   "n_records": 15,
+   "source": "3M datasheet, single point at 1 atm"
+  },
+  {
+   "key": "nPFH",
+   "P_crit_kPa": 1865.0,
+   "P_table_kPa": [
+    30.0,
+    1600.0
+   ],
+   "P_corpus_kPa": [
+    123.85,
+    182.97
+   ],
+   "n_records": 24,
+   "source": "CoolProp n-Perfluorohexane + 3M datasheet transport properties"
+  }
+ ],
+ "geometries": [
+  {
+   "key": "tube",
+   "label": "Vertical tube",
+   "note": "Uniformly heated round tube, the bulk of the corpus.",
+   "group": "Channels",
+   "n_records": 30411,
+   "flow": true,
+   "char_length_from": "tube_Di_mm",
+   "char_length_input": false,
+   "orientations": [
+    {
+     "key": "vertical_upflow",
+     "label": "Vertical upflow"
+    }
+   ],
+   "fluids": [
+    "water"
+   ],
+   "fields": [
+    {
+     "key": "tube_Di_mm",
+     "label": "Inner diameter D",
+     "unit": "mm",
+     "help": "Sets the channel scale of every dimensionless group.",
+     "optional": false,
+     "range": {
+      "min": 1.0,
+      "max": 37.5,
+      "median": 8.11,
+      "p1": 2.496000000000001,
+      "p99": 23.6
+     }
+    }
+   ],
+   "categoricals": [],
+   "ranges": {
+    "P_kPa": {
+     "min": 100.0,
+     "max": 20680.0,
+     "median": 9800.0,
+     "p1": 106.0,
+     "p99": 19610.0
+    },
+    "G_kg_m2s": {
+     "min": 0.0,
+     "max": 8916.0,
+     "median": 1604.0,
+     "p1": 0.0,
+     "p99": 7023.080000000002
+    },
+    "DT_sub_K": {
+     "min": -220.3528169884245,
+     "max": 456.9520561893763,
+     "median": 66.09938986318413,
+     "p1": 0.0,
+     "p99": 190.33814584655892
+    },
+    "T_in_C": {
+     "min": -1.475024953673397,
+     "max": 361.94,
+     "median": 214.27,
+     "p1": 0.0,
+     "p99": 345.12
+    },
+    "heated_length_m": {
+     "min": 0.025,
+     "max": 20.0,
+     "median": 2.0,
+     "p1": 0.152,
+     "p99": 10.94
+    },
+    "char_length_mm": {
+     "min": 1.0,
+     "max": 37.5,
+     "median": 8.11,
+     "p1": 2.496000000000001,
+     "p99": 23.599999999999998
+    },
+    "CHF_kW_m2": {
+     "min": 18.0,
+     "max": 28800.0,
+     "median": 1552.058649,
+     "p1": 201.0,
+     "p99": 8838.38541000001
+    }
+   },
+   "example": {
+    "row_id": 16986,
+    "split": "test",
+    "label": "water / Vertical tube",
+    "measured_CHF_kW_m2": 1531.0,
+    "reference": "*Smolin 1979 from Kirillov database 1992",
+    "payload": {
+     "fluid": "water",
+     "geometry_type": "tube",
+     "orientation": "vertical_upflow",
+     "P_kPa": 9800.0,
+     "subcooling_mode": "both",
+     "DT_sub_K": 112.4247122370688,
+     "T_in_C": 168.46,
+     "G_kg_m2s": 1601.0,
+     "heated_length_m": 2.44,
+     "geometry": {
+      "tube_Di_mm": 8.0
+     }
+    }
+   }
+  },
+  {
+   "key": "rod_bundle",
+   "label": "Rod bundle",
+   "note": "Multi-rod fuel-assembly section.",
+   "group": "Channels",
+   "n_records": 776,
+   "flow": true,
+   "char_length_from": "rod_Drod_mm",
+   "char_length_input": false,
+   "orientations": [
+    {
+     "key": "vertical_upflow",
+     "label": "Vertical upflow"
+    }
+   ],
+   "fluids": [
+    "water"
+   ],
+   "fields": [
+    {
+     "key": "rod_Drod_mm",
+     "label": "Rod diameter",
+     "unit": "mm",
+     "help": "Also the channel scale used for the bundle.",
+     "optional": false,
+     "range": {
+      "min": 10.7,
+      "max": 12.3,
+      "median": 12.3,
+      "p1": 10.7,
+      "p99": 12.3
+     }
+    },
+    {
+     "key": "rod_pitch_mm",
+     "label": "Rod pitch",
+     "unit": "mm",
+     "help": "Reported for 7.5% of the bundle records; leave empty if unknown.",
+     "optional": true,
+     "range": {
+      "min": 14.73,
+      "max": 14.73,
+      "median": 14.73,
+      "p1": 14.73,
+      "p99": 14.73
+     }
+    }
+   ],
+   "categoricals": [],
+   "ranges": {
+    "P_kPa": {
+     "min": 4826.33,
+     "max": 16858.0,
+     "median": 9756.09,
+     "p1": 6860.29,
+     "p99": 16601.72
+    },
+    "G_kg_m2s": {
+     "min": 90.42,
+     "max": 4896.0,
+     "median": 463.38,
+     "p1": 94.18,
+     "p99": 4791.178
+    },
+    "DT_sub_K": {
+     "min": 9.069726640238107,
+     "max": 118.375674659413,
+     "median": 48.69771798264762,
+     "p1": 11.292440070981796,
+     "p99": 106.82282277641279
+    },
+    "T_in_C": {
+     "min": 150.56,
+     "max": 330.0,
+     "median": 253.2717610595035,
+     "p1": 164.12099999999998,
+     "p99": 324.209
+    },
+    "heated_length_m": {
+     "min": 2.134,
+     "max": 3.66,
+     "median": 3.66,
+     "p1": 2.134,
+     "p99": 3.66
+    },
+    "char_length_mm": {
+     "min": 10.7,
+     "max": 12.3,
+     "median": 12.3,
+     "p1": 10.7,
+     "p99": 12.3
+    },
+    "CHF_kW_m2": {
+     "min": 12.0,
+     "max": 4361.0,
+     "median": 555.56,
+     "p1": 239.0025,
+     "p99": 3423.5
+    }
+   },
+   "example": {
+    "row_id": 26413,
+    "split": "test",
+    "label": "water / Rod bundle",
+    "measured_CHF_kW_m2": 576.59,
+    "reference": "EPRI CHF Database - General Electric Test 316 - Oregon State Thesis - Appendix Table G.18",
+    "payload": {
+     "fluid": "water",
+     "geometry_type": "rod_bundle",
+     "orientation": "vertical_upflow",
+     "P_kPa": 9687.14,
+     "subcooling_mode": "both",
+     "DT_sub_K": 82.64481957358346,
+     "T_in_C": 208.89,
+     "G_kg_m2s": 372.96,
+     "heated_length_m": 3.66,
+     "geometry": {
+      "rod_Drod_mm": 12.3,
+      "rod_pitch_mm": null
+     }
+    }
+   }
+  },
+  {
+   "key": "annulus",
+   "label": "Annulus",
+   "note": "Internally heated annular channel.",
+   "group": "Channels",
+   "n_records": 377,
+   "flow": true,
+   "char_length_from": "annulus_Dh_mm",
+   "char_length_input": false,
+   "orientations": [
+    {
+     "key": "vertical_upflow",
+     "label": "Vertical upflow"
+    }
+   ],
+   "fluids": [
+    "water"
+   ],
+   "fields": [
+    {
+     "key": "annulus_Dh_mm",
+     "label": "Hydraulic diameter D_h",
+     "unit": "mm",
+     "help": "Channel scale of the annulus.",
+     "optional": false,
+     "range": {
+      "min": 11.3,
+      "max": 96.3,
+      "median": 24.6,
+      "p1": 11.3,
+      "p99": 96.3
+     }
+    },
+    {
+     "key": "annulus_De_mm",
+     "label": "Heated equivalent diameter D_e",
+     "unit": "mm",
+     "help": "Reported separately; not the channel scale.",
+     "optional": true,
+     "range": {
+      "min": 4.6,
+      "max": 23.6,
+      "median": 8.5,
+      "p1": 4.6,
+      "p99": 22.2
+     }
+    }
+   ],
+   "categoricals": [],
+   "ranges": {
+    "P_kPa": {
+     "min": 4130.0,
+     "max": 15510.0,
+     "median": 6900.0,
+     "p1": 4130.0,
+     "p99": 15510.0
+    },
+    "G_kg_m2s": {
+     "min": 381.0,
+     "max": 5669.0,
+     "median": 2251.5,
+     "p1": 381.63,
+     "p99": 5615.0
+    },
+    "DT_sub_K": {
+     "min": 14.44242580210225,
+     "max": 307.6389760074626,
+     "median": 140.9523983922998,
+     "p1": 23.762723898667144,
+     "p99": 284.9014962115568
+    },
+    "T_in_C": {
+     "min": 4.660586887062777,
+     "max": 285.4760223825641,
+     "median": 158.24735029855253,
+     "p1": 9.376263597997955,
+     "p99": 269.3827664190888
+    },
+    "heated_length_m": {
+     "min": 0.61,
+     "max": 2.743,
+     "median": 1.778,
+     "p1": 0.737,
+     "p99": 2.743
+    },
+    "char_length_mm": {
+     "min": 11.299999999999999,
+     "max": 96.3,
+     "median": 24.6,
+     "p1": 11.299999999999999,
+     "p99": 96.3
+    },
+    "CHF_kW_m2": {
+     "min": 800.0,
+     "max": 6000.0,
+     "median": 2900.0,
+     "p1": 900.0,
+     "p99": 5348.000000000002
+    }
+   },
+   "example": {
+    "row_id": 26041,
+    "split": "test",
+    "label": "water / Annulus",
+    "measured_CHF_kW_m2": 2600.0,
+    "reference": "Zhao 2020 - Janssen",
+    "payload": {
+     "fluid": "water",
+     "geometry_type": "annulus",
+     "orientation": "vertical_upflow",
+     "P_kPa": 9680.0,
+     "subcooling_mode": "both",
+     "DT_sub_K": 36.24505835764005,
+     "T_in_C": 272.3703022184807,
+     "G_kg_m2s": 5655.0,
+     "heated_length_m": 0.914,
+     "geometry": {
+      "annulus_Dh_mm": 15.9,
+      "annulus_De_mm": 6.4
+     }
+    }
+   }
+  },
+  {
+   "key": "helical_coil",
+   "label": "Helical coil",
+   "note": "Helically coiled tube, horizontal axis.",
+   "group": "Channels",
+   "n_records": 257,
+   "flow": true,
+   "char_length_from": "helical_Dtube_mm",
+   "char_length_input": false,
+   "orientations": [
+    {
+     "key": "horizontal_helical",
+     "label": "Horizontal helical"
+    }
+   ],
+   "fluids": [
+    "R123"
+   ],
+   "fields": [
+    {
+     "key": "helical_Dtube_mm",
+     "label": "Tube inner diameter",
+     "unit": "mm",
+     "help": "Channel scale of the coil.",
+     "optional": false,
+     "range": {
+      "min": 5.5,
+      "max": 9.5,
+      "median": 7.5,
+      "p1": 5.5,
+      "p99": 9.5
+     }
+    },
+    {
+     "key": "helical_Do_mm",
+     "label": "Tube outer diameter",
+     "unit": "mm",
+     "help": "",
+     "optional": true,
+     "range": {
+      "min": 6.0,
+      "max": 10.0,
+      "median": 8.0,
+      "p1": 6.0,
+      "p99": 10.0
+     }
+    },
+    {
+     "key": "helical_Dcoil_mm",
+     "label": "Coil diameter",
+     "unit": "mm",
+     "help": "With the tube diameter it sets the Dean number.",
+     "optional": false,
+     "range": {
+      "min": 150.0,
+      "max": 300.0,
+      "median": 200.0,
+      "p1": 150.0,
+      "p99": 300.0
+     }
+    },
+    {
+     "key": "helical_pitch_mm",
+     "label": "Helix pitch",
+     "unit": "mm",
+     "help": "",
+     "optional": true,
+     "range": {
+      "min": 50.0,
+      "max": 50.0,
+      "median": 50.0,
+      "p1": 50.0,
+      "p99": 50.0
+     }
+    }
+   ],
+   "categoricals": [],
+   "ranges": {
+    "P_kPa": {
+     "min": 174.0,
+     "max": 680.0,
+     "median": 317.0,
+     "p1": 180.0,
+     "p99": 672.63
+    },
+    "G_kg_m2s": {
+     "min": 145.0,
+     "max": 2062.0,
+     "median": 718.0,
+     "p1": 177.81,
+     "p99": 1826.760000000002
+    },
+    "DT_sub_K": {
+     "min": 11.35618159907185,
+     "max": 67.06273336549799,
+     "median": 31.895178172770223,
+     "p1": 11.88668760609362,
+     "p99": 63.35690898236649
+    },
+    "T_in_C": {
+     "min": 16.62011943114783,
+     "max": 36.39988560530649,
+     "median": 31.037452297627603,
+     "p1": 19.84488270091064,
+     "p99": 35.69848106016175
+    },
+    "heated_length_m": {
+     "min": 0.467,
+     "max": 2.146,
+     "median": 0.984,
+     "p1": 0.467,
+     "p99": 2.146
+    },
+    "char_length_mm": {
+     "min": 5.5,
+     "max": 9.5,
+     "median": 7.5,
+     "p1": 5.5,
+     "p99": 9.5
+    },
+    "CHF_kW_m2": {
+     "min": 37.7,
+     "max": 419.8,
+     "median": 165.7,
+     "p1": 60.952,
+     "p99": 384.55199999999996
+    }
+   },
+   "example": {
+    "row_id": 26741,
+    "split": "test",
+    "label": "R123 / Helical coil",
+    "measured_CHF_kW_m2": 151.2,
+    "reference": "Kothadia & Prabhu (2020) - Experimental CHF in Helical Coils, Low Pressure R123, App C - DOI: 10.17632/f775wmnpkv.1",
+    "payload": {
+     "fluid": "R123",
+     "geometry_type": "helical_coil",
+     "orientation": "horizontal_helical",
+     "P_kPa": 249.0,
+     "subcooling_mode": "both",
+     "DT_sub_K": 21.34282595271882,
+     "T_in_C": 33.91630983610362,
+     "G_kg_m2s": 573.0,
+     "heated_length_m": 1.006,
+     "geometry": {
+      "helical_Dtube_mm": 7.5,
+      "helical_Do_mm": 8.0,
+      "helical_Dcoil_mm": 300.0,
+      "helical_pitch_mm": 50.0
+     }
+    }
+   }
+  },
+  {
+   "key": "pin_fin_surface",
+   "label": "Pin-fin surface",
+   "note": "Micro-pin-fin enhanced surface in a stagnant pool.",
+   "group": "Enhanced and sprayed surfaces",
+   "n_records": 166,
+   "flow": false,
+   "char_length_from": null,
+   "char_length_input": false,
+   "orientations": [
+    {
+     "key": "pool_boiling",
+     "label": "Stagnant pool"
+    }
+   ],
+   "fluids": [
+    "FC-72",
+    "water"
+   ],
+   "fields": [
+    {
+     "key": "fin_width_um",
+     "label": "Fin width",
+     "unit": "um",
+     "help": "",
+     "optional": false,
+     "range": {
+      "min": 0.0,
+      "max": 1000.0,
+      "median": 30.0,
+      "p1": 0.0,
+      "p99": 1000.0
+     }
+    },
+    {
+     "key": "fin_height_um",
+     "label": "Fin height",
+     "unit": "um",
+     "help": "",
+     "optional": false,
+     "range": {
+      "min": 0.0,
+      "max": 8000.0,
+      "median": 60.0,
+      "p1": 0.0,
+      "p99": 6000.0
+     }
+    },
+    {
+     "key": "fin_spacing_um",
+     "label": "Fin spacing",
+     "unit": "um",
+     "help": "",
+     "optional": false,
+     "range": {
+      "min": 0.0,
+      "max": 2000.0,
+      "median": 30.0,
+      "p1": 0.0,
+      "p99": 2000.0
+     }
+    },
+    {
+     "key": "fin_coverage",
+     "label": "Fin coverage",
+     "unit": "-",
+     "help": "Fraction of the surface carrying fins.",
+     "optional": false,
+     "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "median": 1.0,
+      "p1": 0.0,
+      "p99": 1.0
+     }
+    },
+    {
+     "key": "fin_porosity",
+     "label": "Array porosity",
+     "unit": "-",
+     "help": "",
+     "optional": false,
+     "range": {
+      "min": 0.0,
+      "max": 0.997,
+      "median": 0.75,
+      "p1": 0.0,
+      "p99": 0.978
+     }
+    },
+    {
+     "key": "fin_roughness",
+     "label": "Relative roughness",
+     "unit": "-",
+     "help": "",
+     "optional": false,
+     "range": {
+      "min": 1.0,
+      "max": 16.0,
+      "median": 3.0,
+      "p1": 1.0,
+      "p99": 14.981649999999961
+     }
+    },
+    {
+     "key": "fin_MBL_total_um",
+     "label": "Modulated boiling layer",
+     "unit": "um",
+     "help": "Total thickness of the fin structure.",
+     "optional": false,
+     "range": {
+      "min": 0.0,
+      "max": 3764.706,
+      "median": 60.0,
+      "p1": 0.0,
+      "p99": 2652.3812999999996
+     }
+    }
+   ],
+   "categoricals": [
+    {
+     "key": "fin_shape",
+     "label": "Fin cross-section",
+     "levels": [
+      "Circle",
+      "Octagon",
+      "Square"
+     ],
+     "optional": true
+    },
+    {
+     "key": "fin_array",
+     "label": "Array arrangement",
+     "levels": [
+      "Hexagonal",
+      "Square"
+     ],
+     "optional": true
+    },
+    {
+     "key": "surface_material",
+     "label": "Surface material",
+     "levels": [
+      "Copper",
+      "Nickel",
+      "SiO2",
+      "Silicon",
+      "Silicon (N-type)",
+      "Silicon (P-type)"
+     ],
+     "optional": true
+    }
+   ],
+   "ranges": {
+    "P_kPa": {
+     "min": 101.325,
+     "max": 101.325,
+     "median": 101.325,
+     "p1": 101.325,
+     "p99": 101.325
+    },
+    "G_kg_m2s": {},
+    "DT_sub_K": {
+     "min": 0.0,
+     "max": 45.0,
+     "median": 3.0,
+     "p1": 0.0,
+     "p99": 45.0
+    },
+    "T_in_C": {
+     "min": 57.12435741527048,
+     "max": 99.97429584766638,
+     "median": 57.12435741527048,
+     "p1": 57.12435741527048,
+     "p99": 99.97429584766638
+    },
+    "heated_length_m": {
+     "min": 0.0008070247348687937,
+     "max": 0.002504324970877451,
+     "median": 0.0008070247348687937,
+     "p1": 0.0008070247348687937,
+     "p99": 0.002504324970877451
+    },
+    "char_length_mm": {
+     "min": 0.8070247348687937,
+     "max": 2.504324970877451,
+     "median": 0.8070247348687937,
+     "p1": 0.8070247348687937,
+     "p99": 2.504324970877451
+    },
+    "CHF_kW_m2": {
+     "min": 154.8,
+     "max": 2190.0,
+     "median": 464.0,
+     "p1": 159.89499999999998,
+     "p99": 2109.9399999999996
+    }
+   },
+   "example": {
+    "row_id": 26966,
+    "split": "test",
+    "label": "FC-72 / Pin-fin surface",
+    "measured_CHF_kW_m2": 476.7,
+    "reference": "Swartz 2021 - Pin-Fin CHF: ",
+    "payload": {
+     "fluid": "FC-72",
+     "geometry_type": "pin_fin_surface",
+     "orientation": "pool_boiling",
+     "P_kPa": 101.325,
+     "subcooling_mode": "both",
+     "DT_sub_K": 25.0,
+     "T_in_C": 57.12435741527048,
+     "G_kg_m2s": null,
+     "heated_length_m": null,
+     "geometry": {
+      "fin_width_um": 30.0,
+      "fin_height_um": 60.0,
+      "fin_spacing_um": 30.0,
+      "fin_coverage": 1.0,
+      "fin_porosity": 0.711,
+      "fin_roughness": 3.309,
+      "fin_MBL_total_um": 51.586,
+      "fin_shape": "Square",
+      "fin_array": "Hexagonal",
+      "surface_material": "Silicon (N-type)"
+     }
+    }
+   }
+  },
+  {
+   "key": "spray_flat_surface",
+   "label": "Spray-cooled surface",
+   "note": "Flat surface under an impinging spray.",
+   "group": "Enhanced and sprayed surfaces",
+   "n_records": 95,
+   "flow": false,
+   "char_length_from": null,
+   "char_length_input": false,
+   "orientations": [
+    {
+     "key": "spray_impingement",
+     "label": "Spray impingement"
+    }
+   ],
+   "fluids": [
+    "FC-72",
+    "FC-77",
+    "PF-5052",
+    "water"
+   ],
+   "fields": [
+    {
+     "key": "spray_angle_deg",
+     "label": "Spray cone angle",
+     "unit": "deg",
+     "help": "",
+     "optional": false,
+     "range": {
+      "min": 15.0,
+      "max": 55.8,
+      "median": 55.8,
+      "p1": 15.0,
+      "p99": 55.8
+     }
+    },
+    {
+     "key": "spray_Tsat_C",
+     "label": "Spray saturation temperature",
+     "unit": "degC",
+     "help": "",
+     "optional": false,
+     "range": {
+      "min": 50.0,
+      "max": 100.0,
+      "median": 56.0,
+      "p1": 50.0,
+      "p99": 100.0
+     }
+    },
+    {
+     "key": "spray_DTsub_C",
+     "label": "Spray subcooling",
+     "unit": "degC",
+     "help": "",
+     "optional": false,
+     "range": {
+      "min": 13.0,
+      "max": 77.0,
+      "median": 25.8,
+      "p1": 13.0,
+      "p99": 77.0
+     }
+    }
+   ],
+   "categoricals": [],
+   "ranges": {
+    "P_kPa": {
+     "min": 91.03043913624296,
+     "max": 101.4179966600156,
+     "median": 101.325,
+     "p1": 95.315676865768,
+     "p99": 101.4179966600156
+    },
+    "G_kg_m2s": {},
+    "DT_sub_K": {
+     "min": 13.0,
+     "max": 77.0,
+     "median": 25.8,
+     "p1": 13.0,
+     "p99": 77.0
+    },
+    "T_in_C": {
+     "min": 23.0,
+     "max": 80.0,
+     "median": 33.0,
+     "p1": 23.0,
+     "p99": 74.19200000000004
+    },
+    "heated_length_m": {
+     "min": 0.0006794247711326771,
+     "max": 0.002513710959941683,
+     "median": 0.0008059796253370612,
+     "p1": 0.0006794247711326771,
+     "p99": 0.002507458340173746
+    },
+    "char_length_mm": {
+     "min": 0.6794247711326771,
+     "max": 2.513710959941683,
+     "median": 0.8059796253370611,
+     "p1": 0.6794247711326771,
+     "p99": 2.507458340173746
+    },
+    "CHF_kW_m2": {
+     "min": 680.0,
+     "max": 6380.0,
+     "median": 1480.0,
+     "p1": 717.6,
+     "p99": 5872.4000000000015
+    }
+   },
+   "example": {
+    "row_id": 28720,
+    "split": "test",
+    "label": "PF-5052 / Spray-cooled surface",
+    "measured_CHF_kW_m2": 1920.0,
+    "reference": "Visaria & Mudawar (2008) - Spray Cooling CHF - Int. J. Heat Mass Transfer 51, 5269-5278",
+    "payload": {
+     "fluid": "PF-5052",
+     "geometry_type": "spray_flat_surface",
+     "orientation": "spray_impingement",
+     "P_kPa": 101.325,
+     "subcooling_mode": "both",
+     "DT_sub_K": 23.6,
+     "T_in_C": 26.4,
+     "G_kg_m2s": null,
+     "heated_length_m": null,
+     "geometry": {
+      "spray_angle_deg": 46.4,
+      "spray_Tsat_C": 50.0,
+      "spray_DTsub_C": 23.6
+     }
+    }
+   }
+  },
+  {
+   "key": "plate",
+   "label": "Parallel plate",
+   "note": "Narrow rectangular plate channel.",
+   "group": "Channels",
+   "n_records": 48,
+   "flow": true,
+   "char_length_from": null,
+   "char_length_input": true,
+   "orientations": [
+    {
+     "key": "vertical_upflow",
+     "label": "Vertical upflow"
+    }
+   ],
+   "fluids": [
+    "water"
+   ],
+   "fields": [
+    {
+     "key": "plate_Dh_mm",
+     "label": "Plate channel width",
+     "unit": "mm",
+     "help": "Geometry token of the plate section.",
+     "optional": false,
+     "range": {
+      "min": 120.0,
+      "max": 120.0,
+      "median": 120.0,
+      "p1": 120.0,
+      "p99": 120.0
+     }
+    }
+   ],
+   "categoricals": [],
+   "ranges": {
+    "P_kPa": {
+     "min": 100.0,
+     "max": 1010.0,
+     "median": 200.0,
+     "p1": 100.0,
+     "p99": 1010.0
+    },
+    "G_kg_m2s": {
+     "min": 0.0,
+     "max": 2078.0,
+     "median": 1500.0,
+     "p1": 99.2,
+     "p99": 2053.04
+    },
+    "DT_sub_K": {
+     "min": 6.340722932697688,
+     "max": 79.02321528880839,
+     "median": 13.78980316302908,
+     "p1": 6.39794279797549,
+     "p99": 74.55424656899793
+    },
+    "T_in_C": {
+     "min": 20.58271360829667,
+     "max": 172.0628477485406,
+     "median": 112.7166000201015,
+     "p1": 25.05168232810713,
+     "p99": 171.9337368558502
+    },
+    "heated_length_m": {
+     "min": 0.01,
+     "max": 0.01,
+     "median": 0.01,
+     "p1": 0.01,
+     "p99": 0.01
+    },
+    "char_length_mm": {
+     "min": 15.0,
+     "max": 15.0,
+     "median": 15.0,
+     "p1": 15.0,
+     "p99": 15.0
+    },
+    "CHF_kW_m2": {
+     "min": 2100.0,
+     "max": 14700.0,
+     "median": 6200.0,
+     "p1": 2194.0,
+     "p99": 13854.000000000002
+    }
+   },
+   "example": {
+    "row_id": 26150,
+    "split": "test",
+    "label": "water / Parallel plate",
+    "measured_CHF_kW_m2": 9000.0,
+    "reference": "Zhao 2020 - Richenderfer",
+    "payload": {
+     "fluid": "water",
+     "geometry_type": "plate",
+     "orientation": "vertical_upflow",
+     "P_kPa": 510.0,
+     "subcooling_mode": "both",
+     "DT_sub_K": 22.64746304441076,
+     "T_in_C": 129.9310703475706,
+     "G_kg_m2s": 2000.0,
+     "heated_length_m": 0.01,
+     "geometry": {
+      "plate_Dh_mm": 120.0
+     },
+     "char_length_mm": 15.0
+    }
+   }
+  },
+  {
+   "key": "helical_minichannel",
+   "label": "Helical minichannel",
+   "note": "Coiled minichannel, R134a.",
+   "group": "Channels",
+   "n_records": 29,
+   "flow": true,
+   "char_length_from": "helical_Dtube_mm",
+   "char_length_input": false,
+   "orientations": [
+    {
+     "key": "horizontal_upflow",
+     "label": "Horizontal flow"
+    }
+   ],
+   "fluids": [
+    "R134a"
+   ],
+   "fields": [
+    {
+     "key": "helical_Dtube_mm",
+     "label": "Tube inner diameter",
+     "unit": "mm",
+     "help": "Channel scale of the coil.",
+     "optional": false,
+     "range": {
+      "min": 2.0,
+      "max": 6.0,
+      "median": 3.0,
+      "p1": 2.0,
+      "p99": 5.809999999999999
+     }
+    }
+   ],
+   "categoricals": [],
+   "ranges": {
+    "P_kPa": {
+     "min": 109.0,
+     "max": 334.0,
+     "median": 179.5,
+     "p1": 116.98,
+     "p99": 332.09999999999997
+    },
+    "G_kg_m2s": {
+     "min": 112.1,
+     "max": 1029.7,
+     "median": 239.10000000000002,
+     "p1": 120.118,
+     "p99": 1025.843
+    },
+    "DT_sub_K": {
+     "min": 25.1218314055597,
+     "max": 97.56474642601972,
+     "median": 45.72186233057391,
+     "p1": 25.296391761106612,
+     "p99": 97.13445987072933
+    },
+    "T_in_C": {
+     "min": -95.0,
+     "max": -40.13497903007029,
+     "median": -52.72991461671713,
+     "p1": -95.0,
+     "p99": -40.240567401456964
+    },
+    "heated_length_m": {
+     "min": 0.15,
+     "max": 0.2,
+     "median": 0.2,
+     "p1": 0.1595,
+     "p99": 0.2
+    },
+    "char_length_mm": {
+     "min": 2.0,
+     "max": 6.0,
+     "median": 3.0,
+     "p1": 2.0,
+     "p99": 5.809999999999999
+    },
+    "CHF_kW_m2": {
+     "min": 60.1,
+     "max": 225.7,
+     "median": 149.5,
+     "p1": 60.688,
+     "p99": 224.608
+    }
+   },
+   "example": {
+    "row_id": 28817,
+    "split": "test",
+    "label": "R134a / Helical minichannel",
+    "measured_CHF_kW_m2": 72.3,
+    "reference": "Short Helical Minichannel CHF - Aluminum pin-fin St6mm Flow:None - Experimental Data 2021",
+    "payload": {
+     "fluid": "R134a",
+     "geometry_type": "helical_minichannel",
+     "orientation": "horizontal_upflow",
+     "P_kPa": 306.0,
+     "subcooling_mode": "both",
+     "DT_sub_K": 46.19444103160285,
+     "T_in_C": -44.97148760545716,
+     "G_kg_m2s": 109.6,
+     "heated_length_m": 0.2,
+     "geometry": {
+      "helical_Dtube_mm": 6.0
+     }
+    }
+   }
+  },
+  {
+   "key": "rectangular_channel",
+   "label": "Rectangular channel",
+   "note": "NASA FBCE flow-boiling cell, the microgravity records.",
+   "group": "Channels",
+   "n_records": 24,
+   "flow": true,
+   "char_length_from": "rect_Dh_mm",
+   "char_length_input": false,
+   "orientations": [
+    {
+     "key": "microgravity_ISS",
+     "label": "Microgravity (ISS)"
+    },
+    {
+     "key": "vertical_upflow_1g",
+     "label": "Vertical upflow (1 g reference)"
+    }
+   ],
+   "fluids": [
+    "nPFH"
+   ],
+   "fields": [
+    {
+     "key": "rect_Dh_mm",
+     "label": "Hydraulic diameter D_h",
+     "unit": "mm",
+     "help": "Channel scale of the rectangular cell.",
+     "optional": false,
+     "range": {
+      "min": 3.333,
+      "max": 3.333,
+      "median": 3.333,
+      "p1": 3.333,
+      "p99": 3.333
+     }
+    }
+   ],
+   "categoricals": [],
+   "ranges": {
+    "P_kPa": {
+     "min": 123.85,
+     "max": 182.97,
+     "median": 154.63,
+     "p1": 124.12679999999999,
+     "p99": 182.97
+    },
+    "G_kg_m2s": {
+     "min": 180.04,
+     "max": 2399.99,
+     "median": 790.26,
+     "p1": 212.0112,
+     "p99": 2399.99
+    },
+    "DT_sub_K": {
+     "min": 102.7756287509236,
+     "max": 159.5485721904787,
+     "median": 149.5094429013303,
+     "p1": 102.7756287509236,
+     "p99": 158.7824037401546
+    },
+    "T_in_C": {
+     "min": 65.63,
+     "max": 89.91,
+     "median": 72.2,
+     "p1": 65.72919999999999,
+     "p99": 89.91
+    },
+    "heated_length_m": {
+     "min": 0.1146,
+     "max": 0.1146,
+     "median": 0.1146,
+     "p1": 0.1146,
+     "p99": 0.1146
+    },
+    "char_length_mm": {
+     "min": 3.333,
+     "max": 3.333,
+     "median": 3.333,
+     "p1": 3.333,
+     "p99": 3.333
+    },
+    "CHF_kW_m2": {
+     "min": 122.6,
+     "max": 391.2,
+     "median": 182.05,
+     "p1": 124.39399999999999,
+     "p99": 389.912
+    }
+   },
+   "example": {
+    "row_id": 29084,
+    "split": "test",
+    "label": "nPFH / Rectangular channel",
+    "measured_CHF_kW_m2": 160.7,
+    "reference": "Darges, Devahdhanush, Mudawar et al. (2022) — Flow visualization, heat transfer, and critical heat flux of flow boiling ",
+    "payload": {
+     "fluid": "nPFH",
+     "geometry_type": "rectangular_channel",
+     "orientation": "vertical_upflow_1g",
+     "P_kPa": 155.86,
+     "subcooling_mode": "both",
+     "DT_sub_K": 148.9253164495119,
+     "T_in_C": 72.86,
+     "G_kg_m2s": 430.0,
+     "heated_length_m": 0.1146,
+     "geometry": {
+      "rect_Dh_mm": 3.333
+     }
+    }
+   }
+  },
+  {
+   "key": "Smooth_Tube",
+   "label": "Smooth tube",
+   "note": "Fusion divertor mock-up, smooth bore.",
+   "group": "Fusion high-heat-flux mock-ups",
+   "n_records": 22,
+   "flow": true,
+   "char_length_from": "tube_Di_mm",
+   "char_length_input": false,
+   "orientations": [
+    {
+     "key": "vertical_upflow",
+     "label": "Vertical upflow"
+    }
+   ],
+   "fluids": [
+    "water"
+   ],
+   "fields": [
+    {
+     "key": "tube_Di_mm",
+     "label": "Inner diameter D",
+     "unit": "mm",
+     "help": "Sets the channel scale of every dimensionless group.",
+     "optional": false,
+     "range": {
+      "min": 12.0,
+      "max": 12.0,
+      "median": 12.0,
+      "p1": 12.0,
+      "p99": 12.0
+     }
+    }
+   ],
+   "categoricals": [],
+   "ranges": {
+    "P_kPa": {
+     "min": 500.0,
+     "max": 1000.0,
+     "median": 900.0,
+     "p1": 530.0,
+     "p99": 1000.0
+    },
+    "G_kg_m2s": {
+     "min": 4000.0,
+     "max": 20000.0,
+     "median": 11000.0,
+     "p1": 4300.0,
+     "p99": 19715.0
+    },
+    "DT_sub_K": {
+     "min": 128.8965408164268,
+     "max": 149.9769050202657,
+     "median": 146.3021363875,
+     "p1": 130.68089309758577,
+     "p99": 149.9769050202657
+    },
+    "T_in_C": {
+     "min": 20.0,
+     "max": 30.0,
+     "median": 20.0,
+     "p1": 20.0,
+     "p99": 29.7
+    },
+    "heated_length_m": {
+     "min": 0.1,
+     "max": 0.16,
+     "median": 0.1,
+     "p1": 0.1,
+     "p99": 0.16
+    },
+    "char_length_mm": {
+     "min": 12.0,
+     "max": 12.0,
+     "median": 12.0,
+     "p1": 12.0,
+     "p99": 12.0
+    },
+    "CHF_kW_m2": {
+     "min": 13700.0,
+     "max": 32700.0,
+     "median": 20750.0,
+     "p1": 13721.0,
+     "p99": 32280.0
+    }
+   },
+   "example": {
+    "row_id": 28639,
+    "split": "test",
+    "label": "water / Smooth tube",
+    "measured_CHF_kW_m2": 15600.0,
+    "reference": "JAERI Fusion CHF - Smooth Tube - Shot 1911l - JAERI-Data/Code 97-033 Table 2",
+    "payload": {
+     "fluid": "water",
+     "geometry_type": "Smooth_Tube",
+     "orientation": "vertical_upflow",
+     "P_kPa": 500.0,
+     "subcooling_mode": "both",
+     "DT_sub_K": 128.8965408164268,
+     "T_in_C": 20.0,
+     "G_kg_m2s": 6000.0,
+     "heated_length_m": 0.1,
+     "geometry": {
+      "tube_Di_mm": 12.0
+     }
+    }
+   }
+  },
+  {
+   "key": "Screw_Tube",
+   "label": "Screw-threaded tube",
+   "note": "Fusion divertor mock-up, screw-threaded bore.",
+   "group": "Fusion high-heat-flux mock-ups",
+   "n_records": 18,
+   "flow": true,
+   "char_length_from": "tube_Di_mm",
+   "char_length_input": false,
+   "orientations": [
+    {
+     "key": "vertical_upflow",
+     "label": "Vertical upflow"
+    }
+   ],
+   "fluids": [
+    "water"
+   ],
+   "fields": [
+    {
+     "key": "tube_Di_mm",
+     "label": "Inner diameter D",
+     "unit": "mm",
+     "help": "Sets the channel scale of every dimensionless group.",
+     "optional": false,
+     "range": {
+      "min": 10.0,
+      "max": 15.0,
+      "median": 10.0,
+      "p1": 10.0,
+      "p99": 15.0
+     }
+    }
+   ],
+   "categoricals": [],
+   "ranges": {
+    "P_kPa": {
+     "min": 1000.0,
+     "max": 1000.0,
+     "median": 1000.0,
+     "p1": 1000.0,
+     "p99": 1000.0
+    },
+    "G_kg_m2s": {
+     "min": 4000.0,
+     "max": 15900.0,
+     "median": 10950.0,
+     "p1": 4220.0,
+     "p99": 15801.0
+    },
+    "DT_sub_K": {
+     "min": 143.456579906522,
+     "max": 149.1483600116253,
+     "median": 146.3021363875,
+     "p1": 143.456579906522,
+     "p99": 149.1483600116253
+    },
+    "T_in_C": {
+     "min": 25.0,
+     "max": 31.0,
+     "median": 28.0,
+     "p1": 25.0,
+     "p99": 31.0
+    },
+    "heated_length_m": {
+     "min": 0.16,
+     "max": 0.16,
+     "median": 0.16,
+     "p1": 0.16,
+     "p99": 0.16
+    },
+    "char_length_mm": {
+     "min": 10.0,
+     "max": 15.0,
+     "median": 10.0,
+     "p1": 10.0,
+     "p99": 15.0
+    },
+    "CHF_kW_m2": {
+     "min": 16800.0,
+     "max": 41600.0,
+     "median": 30700.0,
+     "p1": 17973.0,
+     "p99": 41600.0
+    }
+   },
+   "example": {
+    "row_id": 28694,
+    "split": "test",
+    "label": "water / Screw-threaded tube",
+    "measured_CHF_kW_m2": 27000.0,
+    "reference": "JAERI Fusion CHF - Screw Tube 10mm - Shot D14 - JAERI-Data/Code 97-033 Table 7",
+    "payload": {
+     "fluid": "water",
+     "geometry_type": "Screw_Tube",
+     "orientation": "vertical_upflow",
+     "P_kPa": 1000.0,
+     "subcooling_mode": "both",
+     "DT_sub_K": 143.456579906522,
+     "T_in_C": 31.0,
+     "G_kg_m2s": 8000.0,
+     "heated_length_m": 0.16,
+     "geometry": {
+      "tube_Di_mm": 10.0
+     }
+    }
+   }
+  },
+  {
+   "key": "Internal_Fin_Tube",
+   "label": "Internally finned tube",
+   "note": "Fusion divertor mock-up, internally finned.",
+   "group": "Fusion high-heat-flux mock-ups",
+   "n_records": 15,
+   "flow": true,
+   "char_length_from": "tube_Di_mm",
+   "char_length_input": false,
+   "orientations": [
+    {
+     "key": "vertical_upflow",
+     "label": "Vertical upflow"
+    }
+   ],
+   "fluids": [
+    "water"
+   ],
+   "fields": [
+    {
+     "key": "tube_Di_mm",
+     "label": "Inner diameter D",
+     "unit": "mm",
+     "help": "Sets the channel scale of every dimensionless group.",
+     "optional": false,
+     "range": {
+      "min": 12.0,
+      "max": 12.0,
+      "median": 12.0,
+      "p1": 12.0,
+      "p99": 12.0
+     }
+    }
+   ],
+   "categoricals": [],
+   "ranges": {
+    "P_kPa": {
+     "min": 500.0,
+     "max": 900.0,
+     "median": 700.0,
+     "p1": 500.0,
+     "p99": 900.0
+    },
+    "G_kg_m2s": {
+     "min": 4000.0,
+     "max": 13000.0,
+     "median": 9000.0,
+     "p1": 4000.0,
+     "p99": 13000.0
+    },
+    "DT_sub_K": {
+     "min": 128.8965408164268,
+     "max": 149.9769050202657,
+     "median": 140.7922226908198,
+     "p1": 128.8965408164268,
+     "p99": 149.9769050202657
+    },
+    "T_in_C": {
+     "min": 20.0,
+     "max": 20.0,
+     "median": 20.0,
+     "p1": 20.0,
+     "p99": 20.0
+    },
+    "heated_length_m": {
+     "min": 0.1,
+     "max": 0.1,
+     "median": 0.1,
+     "p1": 0.1,
+     "p99": 0.1
+    },
+    "char_length_mm": {
+     "min": 12.0,
+     "max": 12.0,
+     "median": 12.0,
+     "p1": 12.0,
+     "p99": 12.0
+    },
+    "CHF_kW_m2": {
+     "min": 9700.0,
+     "max": 28700.0,
+     "median": 17800.0,
+     "p1": 9700.0,
+     "p99": 28181.999999999996
+    }
+   },
+   "example": {
+    "row_id": 28647,
+    "split": "test",
+    "label": "water / Internally finned tube",
+    "measured_CHF_kW_m2": 24400.0,
+    "reference": "JAERI Fusion CHF - Internal Fin Tube - Shot IFT07 - JAERI-Data/Code 97-033 Table 2",
+    "payload": {
+     "fluid": "water",
+     "geometry_type": "Internal_Fin_Tube",
+     "orientation": "vertical_upflow",
+     "P_kPa": 700.0,
+     "subcooling_mode": "both",
+     "DT_sub_K": 140.7922226908198,
+     "T_in_C": 20.0,
+     "G_kg_m2s": 13000.0,
+     "heated_length_m": 0.1,
+     "geometry": {
+      "tube_Di_mm": 12.0
+     }
+    }
+   }
+  },
+  {
+   "key": "Ext_Fin_Swirl",
+   "label": "Externally finned tube with swirl",
+   "note": "Externally finned tube with a swirl insert.",
+   "group": "Fusion high-heat-flux mock-ups",
+   "n_records": 12,
+   "flow": true,
+   "char_length_from": "tube_Di_mm",
+   "char_length_input": false,
+   "orientations": [
+    {
+     "key": "vertical_upflow",
+     "label": "Vertical upflow"
+    }
+   ],
+   "fluids": [
+    "water"
+   ],
+   "fields": [
+    {
+     "key": "tube_Di_mm",
+     "label": "Inner diameter D",
+     "unit": "mm",
+     "help": "Sets the channel scale of every dimensionless group.",
+     "optional": false,
+     "range": {
+      "min": 12.0,
+      "max": 12.0,
+      "median": 12.0,
+      "p1": 12.0,
+      "p99": 12.0
+     }
+    }
+   ],
+   "categoricals": [],
+   "ranges": {
+    "P_kPa": {
+     "min": 700.0,
+     "max": 1500.0,
+     "median": 900.0,
+     "p1": 700.0,
+     "p99": 1500.0
+    },
+    "G_kg_m2s": {
+     "min": 4000.0,
+     "max": 14000.0,
+     "median": 11000.0,
+     "p1": 4000.0,
+     "p99": 13920.0
+    },
+    "DT_sub_K": {
+     "min": 140.7922226908198,
+     "max": 165.5131333041113,
+     "median": 149.9769050202657,
+     "p1": 140.7922226908198,
+     "p99": 165.4386423313105
+    },
+    "T_in_C": {
+     "min": 20.0,
+     "max": 25.0,
+     "median": 20.0,
+     "p1": 20.0,
+     "p99": 25.0
+    },
+    "heated_length_m": {
+     "min": 0.1,
+     "max": 0.16,
+     "median": 0.1,
+     "p1": 0.1,
+     "p99": 0.16
+    },
+    "char_length_mm": {
+     "min": 12.0,
+     "max": 12.0,
+     "median": 12.0,
+     "p1": 12.0,
+     "p99": 12.0
+    },
+    "CHF_kW_m2": {
+     "min": 25000.0,
+     "max": 41900.0,
+     "median": 35000.0,
+     "p1": 25099.0,
+     "p99": 41647.0
+    }
+   },
+   "example": {
+    "row_id": 28668,
+    "split": "test",
+    "label": "water / Externally finned tube with swirl",
+    "measured_CHF_kW_m2": 30600.0,
+    "reference": "JAERI Fusion CHF - Ext Fin Swirl - Shot SW04 - JAERI-Data/Code 97-033 Table 3",
+    "payload": {
+     "fluid": "water",
+     "geometry_type": "Ext_Fin_Swirl",
+     "orientation": "vertical_upflow",
+     "P_kPa": 900.0,
+     "subcooling_mode": "both",
+     "DT_sub_K": 149.9769050202657,
+     "T_in_C": 20.0,
+     "G_kg_m2s": 6000.0,
+     "heated_length_m": 0.1,
+     "geometry": {
+      "tube_Di_mm": 12.0
+     }
+    }
+   }
+  },
+  {
+   "key": "Hypervapotron",
+   "label": "Hypervapotron",
+   "note": "Slotted high-heat-flux element.",
+   "group": "Fusion high-heat-flux mock-ups",
+   "n_records": 12,
+   "flow": true,
+   "char_length_from": "tube_Di_mm",
+   "char_length_input": false,
+   "orientations": [
+    {
+     "key": "vertical_upflow",
+     "label": "Vertical upflow"
+    }
+   ],
+   "fluids": [
+    "water"
+   ],
+   "fields": [
+    {
+     "key": "tube_Di_mm",
+     "label": "Inner diameter D",
+     "unit": "mm",
+     "help": "Sets the channel scale of every dimensionless group.",
+     "optional": false,
+     "range": {
+      "min": 12.0,
+      "max": 12.0,
+      "median": 12.0,
+      "p1": 12.0,
+      "p99": 12.0
+     }
+    }
+   ],
+   "categoricals": [],
+   "ranges": {
+    "P_kPa": {
+     "min": 700.0,
+     "max": 1000.0,
+     "median": 1000.0,
+     "p1": 700.0,
+     "p99": 1000.0
+    },
+    "G_kg_m2s": {
+     "min": 2000.0,
+     "max": 10000.0,
+     "median": 6000.0,
+     "p1": 2160.0,
+     "p99": 9880.0
+    },
+    "DT_sub_K": {
+     "min": 135.0261788114514,
+     "max": 148.1995317917722,
+     "median": 146.3021363875,
+     "p1": 135.0261788114514,
+     "p99": 148.1236327111536
+    },
+    "T_in_C": {
+     "min": 26.0,
+     "max": 31.0,
+     "median": 27.0,
+     "p1": 26.0,
+     "p99": 31.0
+    },
+    "heated_length_m": {
+     "min": 0.16,
+     "max": 0.16,
+     "median": 0.16,
+     "p1": 0.16,
+     "p99": 0.16
+    },
+    "char_length_mm": {
+     "min": 12.0,
+     "max": 12.0,
+     "median": 12.0,
+     "p1": 12.0,
+     "p99": 12.0
+    },
+    "CHF_kW_m2": {
+     "min": 6800.0,
+     "max": 25300.0,
+     "median": 22000.0,
+     "p1": 6800.0,
+     "p99": 25124.0
+    }
+   },
+   "example": {
+    "row_id": 28707,
+    "split": "test",
+    "label": "water / Hypervapotron",
+    "measured_CHF_kW_m2": 22000.0,
+    "reference": "JAERI Fusion CHF - Hypervapotron - Shot A05 - JAERI-Data/Code 97-033 Table 8",
+    "payload": {
+     "fluid": "water",
+     "geometry_type": "Hypervapotron",
+     "orientation": "vertical_upflow",
+     "P_kPa": 1000.0,
+     "subcooling_mode": "both",
+     "DT_sub_K": 143.456579906522,
+     "T_in_C": 31.0,
+     "G_kg_m2s": 5900.0,
+     "heated_length_m": 0.16,
+     "geometry": {
+      "tube_Di_mm": 12.0
+     }
+    }
+   }
+  },
+  {
+   "key": "Ext_Fin_Smooth",
+   "label": "Externally finned tube",
+   "note": "Externally finned smooth tube.",
+   "group": "Fusion high-heat-flux mock-ups",
+   "n_records": 9,
+   "flow": true,
+   "char_length_from": "tube_Di_mm",
+   "char_length_input": false,
+   "orientations": [
+    {
+     "key": "vertical_upflow",
+     "label": "Vertical upflow"
+    }
+   ],
+   "fluids": [
+    "water"
+   ],
+   "fields": [
+    {
+     "key": "tube_Di_mm",
+     "label": "Inner diameter D",
+     "unit": "mm",
+     "help": "Sets the channel scale of every dimensionless group.",
+     "optional": false,
+     "range": {
+      "min": 12.0,
+      "max": 12.0,
+      "median": 12.0,
+      "p1": 12.0,
+      "p99": 12.0
+     }
+    }
+   ],
+   "categoricals": [],
+   "ranges": {
+    "P_kPa": {
+     "min": 700.0,
+     "max": 900.0,
+     "median": 900.0,
+     "p1": 700.0,
+     "p99": 900.0
+    },
+    "G_kg_m2s": {
+     "min": 4000.0,
+     "max": 13000.0,
+     "median": 7500.0,
+     "p1": 4100.0,
+     "p99": 12900.0
+    },
+    "DT_sub_K": {
+     "min": 140.7922226908198,
+     "max": 149.9769050202657,
+     "median": 149.9769050202657,
+     "p1": 140.7922226908198,
+     "p99": 149.9769050202657
+    },
+    "T_in_C": {
+     "min": 20.0,
+     "max": 20.0,
+     "median": 20.0,
+     "p1": 20.0,
+     "p99": 20.0
+    },
+    "heated_length_m": {
+     "min": 0.1,
+     "max": 0.1,
+     "median": 0.1,
+     "p1": 0.1,
+     "p99": 0.1
+    },
+    "char_length_mm": {
+     "min": 12.0,
+     "max": 12.0,
+     "median": 12.0,
+     "p1": 12.0,
+     "p99": 12.0
+    },
+    "CHF_kW_m2": {
+     "min": 23400.0,
+     "max": 31200.0,
+     "median": 26600.0,
+     "p1": 23400.0,
+     "p99": 31152.0
+    }
+   },
+   "example": {
+    "row_id": 28662,
+    "split": "test",
+    "label": "water / Externally finned tube",
+    "measured_CHF_kW_m2": 26600.0,
+    "reference": "JAERI Fusion CHF - Ext Fin Smooth - Shot EF07 - JAERI-Data/Code 97-033 Table 3",
+    "payload": {
+     "fluid": "water",
+     "geometry_type": "Ext_Fin_Smooth",
+     "orientation": "vertical_upflow",
+     "P_kPa": 700.0,
+     "subcooling_mode": "both",
+     "DT_sub_K": 140.7922226908198,
+     "T_in_C": 20.0,
+     "G_kg_m2s": 9000.0,
+     "heated_length_m": 0.1,
+     "geometry": {
+      "tube_Di_mm": 12.0
+     }
+    }
+   }
+  }
+ ],
+ "sweep_variables": [
+  {
+   "key": "P_kPa",
+   "label": "Pressure",
+   "unit": "kPa",
+   "log": true
+  },
+  {
+   "key": "G_kg_m2s",
+   "label": "Mass flux",
+   "unit": "kg m-2 s-1",
+   "log": false
+  },
+  {
+   "key": "DT_sub_K",
+   "label": "Inlet subcooling",
+   "unit": "K",
+   "log": false
+  },
+  {
+   "key": "char_length_mm",
+   "label": "Channel scale",
+   "unit": "mm",
+   "log": true
+  },
+  {
+   "key": "heated_length_m",
+   "label": "Heated length",
+   "unit": "m",
+   "log": true
+  }
+ ]
+}

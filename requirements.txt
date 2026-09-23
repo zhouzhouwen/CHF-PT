@@ -1,0 +1,13 @@
+# Core (needed by every script)
+numpy>=1.23
+pandas>=1.5
+openpyxl>=3.1
+# Neural models: CHF-PT, ANN, Transformer
+torch>=2.0
+# Tree baselines
+scikit-learn>=1.2
+joblib>=1.2
+xgboost>=2.0
+lightgbm>=4.0
+# Optional, only for the --optuna flag
+# optuna>=3.4

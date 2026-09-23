@@ -1,0 +1,8 @@
+# The model weights and the dataset are committed directly: every file is below
+# GitHub's 100 MB limit and the repository needs no Git LFS.
+* text=auto eol=lf
+*.png  binary
+*.xlsx binary
+*.pt   binary
+*.joblib binary
+*.npz  binary
