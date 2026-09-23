@@ -155,34 +155,3 @@ curl -s -X POST http://localhost:5000/api/predict -H 'Content-Type: application/
        "P_kPa":14700,"G_kg_m2s":2190,"T_in_C":189.68,"heated_length_m":1.57,
        "geometry":{"tube_Di_mm":8.0},"alpha":0.10}'
 ```
-
-## Three things to know before you rely on this
-
-1. **The released weights were trained on the pre-audit build of the database**, which held
-   291 duplicate records more (0.89%, all water in vertical tubes, removed by a
-   six-significant-figure audit). Each duplicate sat in the same subset as the record it
-   copies, so the partition of the surviving records is unchanged, and re-evaluating the
-   weights on the audited test split moves the micro-MAPE of every method by at most 0.03
-   percentage points and leaves every worst-domain error identical. The table above reports
-   the audited numbers.
-2. **`fluid`, `fluid_family`, `geometry_type` and `orientation` are model inputs, not labels.**
-   Every model embeds them, the mixture of experts routes on the fluid family, and the split
-   and the macro-metric are grouped by fluid × geometry. Removing them from the data would
-   silently change every prediction.
-3. **The trained schema carries a fourth anchor token**, the convectively scaled Zuber
-   feature. Its clamp selects unity for every record, so it equals `anchor_zuber_kW_m2`
-   throughout the database, adds no information and is not stored as a column; the scripts
-   materialise it on load, with a comment at the definition, so a released checkpoint sees
-   exactly the schema it was trained with.
-
-## Citation
-
-> Zhou, W., Miwa, S., Wang, K., et al. *CHF-PT: A physics-anchored pre-trained Transformer
-> for transferable critical heat flux prediction.* (under review)
-
-Please also cite the 15 original experimental sources listed in the `Sources` sheet of the
-data file when you use the database.
-
-## License
-
-[to be filled in — code and data may carry different licenses]
