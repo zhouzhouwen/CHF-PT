@@ -96,18 +96,15 @@ CAT_COLS = CAT_COMMON + CAT_GEOMETRY                                # 7
 
 # --- physics anchors ------------------------------------------------------
 # The released file carries the three independent anchors. The trained schema
-# additionally holds a fourth token, the convective correction of Appendix A,
+# additionally holds a fourth token, a convectively scaled Zuber feature,
 # which reduces to the Zuber value identically over the whole corpus; it is
 # materialised here so a released checkpoint sees the exact schema it was
 # trained with, and so a model trained from scratch with these scripts is
 # schema-identical to the released ones.
 ANCHOR_FILE_COLS = ["anchor_zuber_kW_m2", "anchor_bowe_kW_m2", "anchor_bowring_kW_m2"]
 ANCHOR_DEGENERATE = "anchor_zuber_scaled_kW_m2"
-# The two auxiliary columns were renamed in September 2026 for accuracy: the
-# Bo-We flow-scaling token is an engineered boiling-number scaling and not the
-# Kandlikar correlation, and the fourth column is the convectively scaled Zuber
-# feature. Files and checkpoints written before the rename are mapped onto the
-# current names when they are loaded, so both keep working unchanged.
+# The released checkpoints store two anchor columns under earlier names; they are
+# mapped onto the current names when they are loaded.
 ANCHOR_ALIASES = {
     "anchor_kandlikar_kW_m2": "anchor_bowe_kW_m2",
     "Bo\u2013We flow-scaling feature": "anchor_bowe_kW_m2",
@@ -116,7 +113,7 @@ ANCHOR_ALIASES = {
 
 
 def canonical_anchor_names(names):
-    """Map legacy anchor names, as column labels or stored schema entries, to current ones."""
+    """Map stored anchor names, as column labels or schema entries, to the current ones."""
     return [ANCHOR_ALIASES.get(str(n).strip(), n) for n in names]
 ANCHOR_COLS = ANCHOR_FILE_COLS[:1] + ["anchor_bowe_kW_m2", "anchor_bowring_kW_m2",
                                       ANCHOR_DEGENERATE]
@@ -407,9 +404,8 @@ class Preprocessor:
         p = cls()
         for k, v in d.items():
             setattr(p, k, v)
-        # checkpoints trained before the September 2026 anchor rename store the
-        # old column names in their schema; map them so the same weights read
-        # the renamed dataset columns
+        # the released checkpoints store the earlier anchor names in their schema;
+        # map them so the same weights read the current dataset columns
         p.anchor_cols = canonical_anchor_names(getattr(p, "anchor_cols", []))
         for attr in ("transform", "mean", "std"):
             m = getattr(p, attr, None)

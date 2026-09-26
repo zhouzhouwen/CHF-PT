@@ -5,8 +5,8 @@
 The server needs three things that the released checkpoints do not carry: the
 saturation properties of the seven fluids, the conformal correction and the
 out-of-distribution reference, and the input schema the interface is built
-from. All three are derived here, once, from ``CHF-PT_release`` — and after
-that the demo folder is self-contained and portable.
+from. All three are derived here, once, from this repository (``data/`` and
+``model/chfpt``), and after that the demo folder is self-contained and portable.
 
     python prepare_assets.py                 # build everything
     python prepare_assets.py --verify        # rebuild nothing, check the physics
@@ -15,7 +15,7 @@ that the demo folder is self-contained and portable.
 ``--verify`` is the important one: it reconstructs held-out records of the
 released database from their primitive inputs alone, exactly as the web form
 does, and compares every derived feature and every prediction with the released
-values. It should report agreement at machine precision.
+values, and lists every column in which they differ.
 """
 
 from __future__ import annotations
@@ -37,10 +37,8 @@ from chfpt_core import (ANCHOR_COLS, ANCHOR_DEGENERATE, CAT_COLS, LEAKY_CELLS, N
                         Preprocessor, TAG_COL, build_model, load_neural_checkpoint)   # noqa: E402
 import physics                                                                        # noqa: E402
 
-# Anchor columns renamed in September 2026 for accuracy: the Bo-We flow-scaling
-# token is not the Kandlikar correlation, and the fourth column is the
-# convectively scaled Zuber feature. Data files and checkpoints written before
-# the rename are mapped onto the current names when they are loaded.
+# The released checkpoints store two anchor columns under earlier names; they
+# are mapped onto the current names when they are loaded.
 ANCHOR_ALIASES = {
     "anchor_kandlikar_kW_m2": "anchor_bowe_kW_m2",
     "Bo\u2013We flow-scaling feature": "anchor_bowe_kW_m2",
@@ -49,14 +47,15 @@ ANCHOR_ALIASES = {
 
 
 def canonical_anchor_names(names):
-    """Map legacy anchor names, as column labels or stored schema entries, to current ones."""
+    """Map stored anchor names, as column labels or schema entries, to the current ones."""
     return [ANCHOR_ALIASES.get(str(n).strip(), n) for n in names]
 
 from physics import P_CRIT_KPA, POOL_LIKE, TUBE_CLASS                                 # noqa: E402
 
 ASSETS = HERE / "assets"
-MODELS = HERE / "models"
-DEFAULT_RELEASE = HERE.parent / "CHF-PT_release"
+MODELS = (HERE / "models") if any((HERE / "models").glob("chfpt_seed*.pt")) \
+    else (HERE.parent / "model" / "chfpt")
+DEFAULT_RELEASE = HERE.parent
 ALPHAS = [0.20, 0.10, 0.05]
 OOD_REF_N = 8000
 
@@ -549,7 +548,7 @@ def verify(df: pd.DataFrame, device) -> None:
     clean = [w for w in worst if w[1] <= 1e-3 and w[2] == 0]
     bad = [w for w in worst if w not in clean]
     print(f"  {len(clean)} of {len(worst)} numeric columns agree to better than 1e-3 "
-          f"(worst of them {clean[0][1]:.1e} — the tables were sampled from a newer CoolProp "
+          f"(worst of them {clean[0][1]:.1e}; the tables were sampled from a newer CoolProp "
           f"than the compilation used)")
     for c, m, mism in bad:
         a = pd.to_numeric(frame_ref[c], errors="coerce").to_numpy(dtype=np.float64)
@@ -559,12 +558,9 @@ def verify(df: pd.DataFrame, device) -> None:
         print(f"  ! {c:24s} max deviation {m:.3e} | {n_mat} records differ by more than 1% "
               f"| {mism} presence mismatches")
     if bad:
-        print("    Both are evidence tokens, and both differences are understood: the released\n"
-              "    Bowring column was evaluated on an upstream table whose inlet enthalpy was\n"
-              "    corrupted for the OECD Phase-2 records and was left empty where that table had\n"
-              "    no diameter, and the released Bo-We column used the diameter recorded at compilation for\n"
-              "    every helical coil. The demo evaluates both correlations from the inputs the\n"
-              "    user actually supplies, which is why a handful of records move.")
+        print("    Both are evidence tokens. The demo evaluates both correlations from the inputs\n"
+              "    the user supplies, while the released columns keep the values of the compiled\n"
+              "    database; demo/README.md lists where the two differ.")
     for c in CAT_COLS:
         a = frame_ref[c].astype("object").where(frame_ref[c].notna(), None)
         diff = int(sum(1 for x, y in zip(a, frame_new[c]) if (x or None) != (y or None)))

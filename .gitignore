@@ -4,10 +4,9 @@ __pycache__/
 .DS_Store
 train/logs/
 demo/models/
-*.pre_rename.bak
 
 # Only the proposed model is published. The four baselines are described in the
-# paper; their scripts and weights stay local, their held-out predictions do not.
+# paper; their scripts, weights and predictions are not part of this repository.
 model/ann/
 model/transformer/
 model/xgboost/

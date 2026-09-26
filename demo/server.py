@@ -451,8 +451,8 @@ def operating_map():
 def attribution():
     """How much the prediction moves when one token is withheld.
 
-    Each defined feature is removed in turn — exactly as a record that never
-    measured it would arrive — and the model is run again on the same residual
+    Each defined feature is removed in turn, as for a record that never
+    measured it, and the model is run again on the same residual
     base, so the change is the marginal weight the network puts on that token.
     The layer is deliberately over-complete (the density ratio, for one, is
     implied by two other tokens), so these are marginal effects, not an
@@ -841,11 +841,11 @@ class Links:
             print("  " + "".ljust(pad) + f"http://{ip}:{self.port}"
                   + "   (anyone on this network)")
         if self.public:
-            note = ("(permanent — same address at every start)" if self.kind == "permanent"
-                    else "(temporary — a new address at every start)")
+            note = ("(permanent, same address at every start)" if self.kind == "permanent"
+                    else "(temporary, a new address at every start)")
             print("  " + "Public".ljust(pad) + f"{self.public}   {note}")
         else:
-            print("  " + "Public".ljust(pad) + "not published — see --tunnel-name for a "
+            print("  " + "Public".ljust(pad) + "not published; see --tunnel-name for a "
                                               "permanent address")
         print("=" * 74 + "\n", flush=True)
 

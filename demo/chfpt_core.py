@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""CHF-PT schema, preprocessor and network — extracted verbatim from the release.
+"""CHF-PT schema, preprocessor and network, as defined in ``test/test_chfpt.py``.
 
-Every block below is a byte-identical copy of the corresponding block of
-``CHF-PT_release/test/test_chfpt.py`` (which is itself identical to
-``train/train_chfpt.py``), so a checkpoint served by this demo is rebuilt by
-exactly the code that trained and evaluated it. Nothing here is refitted: the
-frozen preprocessor and the configuration travel inside the .pt file.
-
-Do not edit. To re-sync after a new release, re-run ``prepare_assets.py --sync``.
+The definitions below are those of ``test/test_chfpt.py`` and
+``train/train_chfpt.py``, so a checkpoint served by this demo is rebuilt by the
+code that trained and evaluated it. Nothing here is refitted: the frozen
+preprocessor and the configuration travel inside the .pt file.
 """
 
 from __future__ import annotations
@@ -26,7 +23,7 @@ import torch.nn.functional as F
 
 
 # ===========================================================================
-# 1. Dataset schema  (verbatim: test_chfpt.py lines 60-130)
+# 1. Dataset schema  (as in test/test_chfpt.py)
 # ===========================================================================
 ID_COL = "row_id"
 TARGET_COL = "CHF_kW_m2"
@@ -67,26 +64,24 @@ CAT_COLS = CAT_COMMON + CAT_GEOMETRY                                # 7
 
 # --- physics anchors ------------------------------------------------------
 # The released file carries the three independent anchors. The trained schema
-# additionally holds a fourth token, the convective correction of Appendix A,
+# additionally holds a fourth token, a convectively scaled Zuber feature,
 # which reduces to the Zuber value identically over the whole corpus; it is
 # materialised here so a released checkpoint sees the exact schema it was
 # trained with, and so a model trained from scratch with these scripts is
 # schema-identical to the released ones.
 ANCHOR_FILE_COLS = ["anchor_zuber_kW_m2", "anchor_bowe_kW_m2", "anchor_bowring_kW_m2"]
 ANCHOR_DEGENERATE = "anchor_zuber_scaled_kW_m2"
-# Anchor columns renamed in September 2026 for accuracy: the Bo-We flow-scaling
-# token is not the Kandlikar correlation, and the fourth column is the
-# convectively scaled Zuber feature. Data files and checkpoints written before
-# the rename are mapped onto the current names when they are loaded.
+# The released checkpoints store two anchor columns under earlier names; they
+# are mapped onto the current names when they are loaded.
 ANCHOR_ALIASES = {
-    "anchor_bowe_kW_m2": "anchor_bowe_kW_m2",
+    "anchor_kandlikar_kW_m2": "anchor_bowe_kW_m2",
     "Bo\u2013We flow-scaling feature": "anchor_bowe_kW_m2",
-    "anchor_zuber_scaled_kW_m2": "anchor_zuber_scaled_kW_m2",
+    "anchor_flow_kW_m2": "anchor_zuber_scaled_kW_m2",
 }
 
 
 def canonical_anchor_names(names):
-    """Map legacy anchor names, as column labels or stored schema entries, to current ones."""
+    """Map stored anchor names, as column labels or schema entries, to the current ones."""
     return [ANCHOR_ALIASES.get(str(n).strip(), n) for n in names]
 
 ANCHOR_COLS = ANCHOR_FILE_COLS[:1] + ["anchor_bowe_kW_m2", "anchor_bowring_kW_m2",
@@ -117,7 +112,7 @@ LEAKY_CELLS = {
 
 
 # ===========================================================================
-# 2. Preprocessor  (verbatim: test_chfpt.py lines 272-394)
+# 2. Preprocessor  (as in test/test_chfpt.py)
 # ===========================================================================
 
 
@@ -243,7 +238,7 @@ class Preprocessor:
         p = cls()
         for k, v in d.items():
             setattr(p, k, v)
-        # checkpoints trained before the September 2026 anchor rename
+        # the released checkpoints store the earlier anchor names; map them
         p.anchor_cols = canonical_anchor_names(getattr(p, "anchor_cols", []))
         for attr in ("transform", "mean", "std"):
             m = getattr(p, attr, None)
@@ -253,7 +248,7 @@ class Preprocessor:
 
 
 # ===========================================================================
-# 3. Network  (verbatim: test_chfpt.py lines 528-689)
+# 3. Network  (as in test/test_chfpt.py)
 # ===========================================================================
 
 
@@ -420,7 +415,7 @@ def build_model(cfg: dict, pp: Preprocessor) -> CHFPT:
 
 
 # ===========================================================================
-# 4. Checkpoint loading  (verbatim: test_chfpt.py lines 697-705)
+# 4. Checkpoint loading  (as in test/test_chfpt.py)
 # ===========================================================================
 
 

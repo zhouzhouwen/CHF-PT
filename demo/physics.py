@@ -2,22 +2,19 @@
 # -*- coding: utf-8 -*-
 """From a handful of measured quantities to the full CHF-PT input record.
 
-A user of the demo types only what an experimenter actually reads off the rig:
+A user of the demo types only what an experiment reports:
 the fluid, the system pressure, the inlet temperature or subcooling, the mass
 flux, the heated length and the two or three numbers that describe the test
-section. Everything else that the model consumes — eight saturation properties,
-eleven dimensionless or derived groups and three closed-form CHF correlations —
-is reconstructed here with the *same* formulas that built the released
-database, so a record assembled from the form is indistinguishable from the
-corresponding row of ``CHF_dataset_v1.1.xlsx``.
-
-Every formula below was verified against the released file
-(``prepare_assets.py --verify``); the agreement is at machine precision.
+section. Everything else that the model consumes (eight saturation properties,
+eleven dimensionless or derived groups and three closed-form CHF correlations)
+is reconstructed here with the formulas that built the released database.
+``prepare_assets.py --verify`` compares the reconstruction with the released
+rows and lists the columns in which they differ (see ``README.md``).
 
 Saturation properties come from ``assets/fluid_props.json``, a table sampled
 from CoolProp (and, for FC-77 and PF-5052, from the manufacturer data used when
 the database was compiled). The table is shipped so that a deployment needs
-neither CoolProp nor the 25 MB database file.
+neither CoolProp nor the database file.
 """
 
 from __future__ import annotations
@@ -163,14 +160,14 @@ def zuber_kW_m2(rho_l: float, rho_v: float, hfg_kJkg: float, sigma: float,
     return q_W * 1e-3
 
 
-def kandlikar_kW_m2(G: Optional[float], We_l: Optional[float], rho_ratio: float,
-                    hfg_kJkg: float) -> Optional[float]:
+def bowe_kW_m2(G: Optional[float], We_l: Optional[float], rho_ratio: float,
+               hfg_kJkg: float) -> Optional[float]:
     """Bo-We flow-scaling token, Equation (A1) of the paper.
 
         Bo_CHF = 0.62 (rho_v/rho_l)^0.1 We_l^-0.4,   q = Bo_CHF G h_fg
 
     Needs a channel mass flux, so it emits no token for pool boiling and
-    sprays — the same absence that removes G, Re and We from the common layer.
+    sprays, in the same way as G, Re and We are absent from the common layer.
     """
     if G is None or We_l is None or not np.isfinite(G) or not np.isfinite(We_l):
         return None
@@ -181,7 +178,7 @@ def kandlikar_kW_m2(G: Optional[float], We_l: Optional[float], rho_ratio: float,
 
 
 # --- water saturation polynomial used by the Bowring correlation -----------
-# Verbatim from src/water_props.py, the routine the database was built with.
+# The water saturation polynomial with which the database was built.
 # Bowring is evaluated with this h_fg (not with the CoolProp value) so that the
 # anchor reproduces the released column exactly.
 def _polyval3(L: float, c3: float, c2: float, c1: float, c0: float) -> float:
@@ -434,7 +431,7 @@ def derive_record(payload: dict, props: FluidProperties) -> Tuple[Dict[str, obje
     if geom == "annulus" and G is not None and geo.get("annulus_De_mm"):
         De = geo["annulus_De_mm"] * 1e-3
         We_anchor = G * G * De / (rho_l * sigma)
-    q_kand = kandlikar_kW_m2(G, We_anchor, rho_ratio, hfg)
+    q_bowe = bowe_kW_m2(G, We_anchor, rho_ratio, hfg)
     q_bow = (bowring_kW_m2(P, G, char, heated, DH_in)
              if (fluid == "water" and geom in BOWRING_GEOMS) else None)
 
@@ -449,7 +446,7 @@ def derive_record(payload: dict, props: FluidProperties) -> Tuple[Dict[str, obje
         "G_kg_m2s": G, "Re_l": Re_l, "We_l": We_l,
         "char_length_m": char, "heated_length_m": heated, "L_over_D": L_over_D,
         "Bond": Bond, "confinement_Co": conf_Co,
-        "anchor_zuber_kW_m2": q_zuber, "anchor_bowe_kW_m2": q_kand,
+        "anchor_zuber_kW_m2": q_zuber, "anchor_bowe_kW_m2": q_bowe,
         "anchor_bowring_kW_m2": q_bow, "anchor_zuber_scaled_kW_m2": q_zuber,
         **geo, **cats,
     }
@@ -492,7 +489,7 @@ def derive_record(payload: dict, props: FluidProperties) -> Tuple[Dict[str, obje
         "anchors": [
             {"name": "Zuber", "value": q_zuber, "role": "residual base",
              "note": "pool-boiling limit from saturation properties"},
-            {"name": "Bo-We", "value": q_kand, "role": "input token",
+            {"name": "Bo-We", "value": q_bowe, "role": "input token",
              "note": "engineered flow scaling, not a calibrated correlation; needs a channel mass flux"},
             {"name": "Bowring", "value": q_bow, "role": "input token",
              "note": "water in a tube-type channel, 0.2-19 MPa, G > 0"},

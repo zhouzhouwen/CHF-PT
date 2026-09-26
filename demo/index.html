@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CHF-PT — critical heat flux predictor</title>
+<title>CHF-PT: critical heat flux predictor</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#128293;</text></svg>">
 <style>
 /* ===================================================================
@@ -224,7 +224,7 @@ footer #foot{max-width:110ch}
 <header class="top">
   <div class="brand">
     <h1>CHF&#8209;<span>PT</span></h1>
-    <div class="full">Critical Heat Flux — Physics-anchored Pre-trained Transformer</div>
+    <div class="full">Physics-anchored Pre-trained Transformer for Critical Heat Flux</div>
     <p>Predicts the critical heat flux of a boiling system from its operating conditions.
        One model for every geometry and every fluid.</p>
   </div>
@@ -353,7 +353,7 @@ footer #foot{max-width:110ch}
           <summary>Open the batch tool</summary>
           <div id="batchBody">
             <div class="note">
-              Give a CSV whose columns are named like the fields on the left —
+              Give a CSV whose columns are named like the fields on the left:
               <code>P_kPa</code>, <code>G_kg_m2s</code>, <code>DT_sub_K</code>,
               <code>tube_Di_mm</code>, <code>q_op_kW_m2</code>, and so on. A column you leave out
               keeps the value from the form, so a study that varies two quantities needs only
@@ -388,7 +388,7 @@ footer #foot{max-width:110ch}
           <b>OOD score</b>, which says whether the condition resembles what the model was
           pre-trained on.</li>
       <li>Inputs may leave the corpus. The prediction still comes back, with an amber line naming
-          the inputs that left it — treat those as extrapolation and read the OOD score.</li>
+          the inputs that left it. Treat those as extrapolation and read the OOD score.</li>
       <li><b>Parametric sweep</b> varies one input and draws the response with its interval;
           <b>Operating map</b> varies two and draws CHF over the plane.</li>
       <li>Enter an <b>operating heat flux</b> and <b>Design margin</b> reports the allowable flux
@@ -448,7 +448,7 @@ function numVal(v, n){
 }
 
 /* --------------------------------------------------------------------
-   Units. Everything the server sees is canonical — kPa and kW m⁻² — and
+   Units. Everything the server sees is canonical (kPa and kW m⁻²), and
    only the display is converted, so no arithmetic ever crosses a unit
    boundary. canonical = shown × factor.
    -------------------------------------------------------------------- */
@@ -599,7 +599,7 @@ function buildCustomFluid(){
   for (let i = 0; i < items.length; i += 2) box.appendChild(rowOf(items[i], items[i + 1]));
   box.appendChild(el("div", "note",
     "Saturation properties at your pressure; they stay as entered when the pressure changes. "
-    + "The model then works from the properties alone — no fluid-identity token is emitted "
+    + "The model then works from the properties alone: no fluid-identity token is emitted "
     + "unless the name is one of the seven pre-trained fluids."));
 }
 function fillCustomFrom(props){
@@ -641,7 +641,7 @@ function updateGeomNote(){
   const ex = S.example;
   $("#geomNote").textContent = S.geom.note + " "
     + S.geom.n_records.toLocaleString() + " records in the corpus"
-    + (ex ? "; record #" + ex.row_id + " is loaded — " + splitNote(ex) + ", measured "
+    + (ex ? "; record #" + ex.row_id + " is loaded (" + splitNote(ex) + "), measured "
             + group(fD(ex.measured_CHF_kW_m2), 4) + " " + FU() + "." : ".");
 }
 function rebuildForm(){
@@ -1059,11 +1059,11 @@ function renderResult(r, keepTrend){
     const f = el("div", "flagline");
     f.innerHTML = "<b>Extrapolation.</b> " + out.length
       + (out.length === 1 ? " input is" : " inputs are")
-      + " outside what this section was trained on. The prediction is still made — tap for details.";
+      + " outside what this section was trained on. The prediction is still made; tap for details.";
     const ul = el("ul");
     out.forEach(o => ul.appendChild(el("li", null, o.kind === "range"
       ? o.name + " " + group(dval(o.value, o.unit), 4) + " " + dunit(o.unit)
-        + " — the corpus has " + group(dval(o.min, o.unit), 3) + " to "
+        + "; the corpus has " + group(dval(o.min, o.unit), 3) + " to "
         + group(dval(o.max, o.unit), 3) + " " + dunit(o.unit)
       : o.text)));
     f.appendChild(ul);
@@ -1092,7 +1092,7 @@ function renderResult(r, keepTrend){
               : r.novelty.level === "edge" ? "between " + sig(p["90"], 2) + " and " + sig(p["99"], 2)
                   + ", the top tenth of held-out records"
               : "above " + sig(p["99"], 2) + ", beyond all but 1% of held-out records";
-  const nv = tile("OOD score", sig(r.novelty.score, 3), r.novelty.label + " — " + scale,
+  const nv = tile("OOD score", sig(r.novelty.score, 3), r.novelty.label + ": " + scale,
                   r.novelty.level);
   const meter = el("div"); nv.appendChild(meter);
   tiles.appendChild(nv);
@@ -1373,7 +1373,7 @@ function renderDesign(d){
   const U = FU(), L = d.label.toLowerCase(), VU = dunit(d.unit);
   line("", "Allowable operating flux at a factor of " + sig(d.safety_factor, 3)
     + ": <b>" + group(fD(d.allowable_q_op_kW_m2), 4) + " " + U + "</b> "
-    + "<span>— the lower bound divided by the factor</span>");
+    + "<span>(the lower bound divided by the factor)</span>");
   const now = "Your " + group(fD(d.q_op_kW_m2), 4) + " " + U + " sits at <b>"
     + sig(d.margin_now, 3) + "×</b> the lower bound. ";
   if (d.satisfied === true){
@@ -1608,13 +1608,13 @@ function renderBatch(){
   out.appendChild(t);
   if (b.rows.length > show)
     out.appendChild(el("div", "legend", "showing the first " + show + " of "
-      + b.rows.length.toLocaleString() + " rows — the full table is in the download"));
+      + b.rows.length.toLocaleString() + " rows; the full table is in the download"));
 }
 function downloadBatch(){
   const b = S.batch;
   if (!b) return;
   const outCols = ["chf_kW_m2", "lower_kW_m2", "upper_kW_m2", "ood_score", "ood_level",
-                   "anchor_zuber_kW_m2", "anchor_kandlikar_kW_m2", "anchor_bowring_kW_m2",
+                   "anchor_zuber_kW_m2", "anchor_bowe_kW_m2", "anchor_bowring_kW_m2",
                    "DNBR", "DNBR_lower", "outside_corpus", "outside", "error"];
   const lines = [b.head.concat(outCols).map(csvCell).join(",")];
   b.rows.forEach((row, i) => {
@@ -1730,7 +1730,7 @@ async function boot(){
   });
 
   $("#foot").innerHTML =
-    "<b>CHF-PT</b> — a physics-anchored pre-trained Transformer for critical heat flux across "
+    "<b>CHF-PT</b>, a physics-anchored pre-trained Transformer for critical heat flux across "
     + "fluids, geometries and gravity levels. Zhou et al., under review. Serving the five "
     + "released checkpoints; predictions outside the pre-trained corpus are extrapolation.";
 
