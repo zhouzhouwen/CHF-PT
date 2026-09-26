@@ -7,7 +7,8 @@ tokens from a common feature layer and a geometry-specific feature layer, so tha
 described by different parameters are handled by one model. The learning target is the logarithmic
 residual to the closed-form Zuber correlation, which sets the CHF magnitude for any fluid from its
 saturation properties. The database released with the model holds 32,271 data points covering
-7 fluids, 15 geometries and CHF from 12 to 41,900 kW m⁻².
+7 fluids, 15 geometries and CHF from 12 to 41,900 kW m⁻². A public instance of the service is available at https://open-nest-entries-commission.trycloudflare.com/ and its source is distributed with the code listed below. <img width="432" height="47" alt="image" src="https://github.com/user-attachments/assets/fb09643a-3af7-40ed-a094-da737cb1f4e9" />
+
 
 ![The CHF-PT web service](docs/web_demo.png)
 
